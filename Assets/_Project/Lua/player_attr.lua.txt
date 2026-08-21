@@ -1,0 +1,56 @@
+local EventBus = require 'event_bus'
+
+local M = {}
+local attrs = {
+    maxHp = 100,
+    hp = 100,
+    attack = 12,
+    defense = 5,
+    speed = 3.6
+}
+
+function M.init(config)
+    config = config or {}
+    attrs.maxHp = config.maxHp or 100
+    attrs.hp = config.hp or attrs.maxHp
+    attrs.attack = config.attack or 12
+    attrs.defense = config.defense or 5
+    attrs.speed = config.speed or 3.6
+    M.publish()
+end
+
+function M.get()
+    return {
+        maxHp = attrs.maxHp,
+        hp = attrs.hp,
+        attack = attrs.attack,
+        defense = attrs.defense,
+        speed = attrs.speed
+    }
+end
+
+function M.get_speed()
+    return attrs.speed
+end
+
+function M.take_damage(amount)
+    if amount == nil or amount <= 0 then
+        return
+    end
+    attrs.hp = math.max(0, attrs.hp - amount)
+    M.publish()
+end
+
+function M.heal(amount)
+    if amount == nil or amount <= 0 then
+        return
+    end
+    attrs.hp = math.min(attrs.maxHp, attrs.hp + amount)
+    M.publish()
+end
+
+function M.publish()
+    EventBus.publish("OnPlayerAttributeChanged", M.get())
+end
+
+return M

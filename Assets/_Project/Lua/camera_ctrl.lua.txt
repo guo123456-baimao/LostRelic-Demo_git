@@ -1,0 +1,79 @@
+local EventBus = require 'event_bus'
+local Vector3 = CS.UnityEngine.Vector3
+local Quaternion = CS.UnityEngine.Quaternion
+local Cursor = CS.UnityEngine.Cursor
+local CursorLockMode = CS.UnityEngine.CursorLockMode
+local InputService = CS.LostRelic.InputService
+
+local M = {}
+local camera_transform
+local player_transform
+local yaw = 0
+local pitch = 0
+local look_lock_count = 0
+local look_locked = false
+local eye_height = 1.1
+local sensitivity = 2.5
+local min_pitch = -85
+local max_pitch = 85
+
+function M.init(camera_go, player_go)
+    camera_transform = camera_go.transform
+    player_transform = player_go.transform
+    yaw = camera_transform.eulerAngles.y
+    pitch = 0
+
+    Cursor.lockState = CursorLockMode.Locked
+    Cursor.visible = false
+    EventBus.subscribe("OnCameraLookLockRequest", M.set_look_locked)
+end
+
+function M.get_yaw()
+    return yaw
+end
+
+function M.set_look_locked(locked)
+    if locked then
+        look_lock_count = look_lock_count + 1
+    else
+        look_lock_count = math.max(0, look_lock_count - 1)
+    end
+
+    look_locked = look_lock_count > 0
+    if look_locked then
+        Cursor.lockState = CursorLockMode.None
+        Cursor.visible = true
+    else
+        Cursor.lockState = CursorLockMode.Locked
+        Cursor.visible = false
+    end
+end
+
+function M.update(dt)
+    if not camera_transform or not player_transform then
+        return
+    end
+
+    if not look_locked then
+        local mouse_x = InputService.GetAxis("Mouse X")
+        local mouse_y = InputService.GetAxis("Mouse Y")
+        yaw = yaw + mouse_x * sensitivity
+        pitch = pitch - mouse_y * sensitivity
+        if pitch > max_pitch then
+            pitch = max_pitch
+        elseif pitch < min_pitch then
+            pitch = min_pitch
+        end
+    end
+
+    EventBus.publish("OnCameraYawChanged", yaw)
+    camera_transform.position = player_transform.position + Vector3(0, eye_height, 0)
+    camera_transform.rotation = Quaternion.Euler(pitch, yaw, 0)
+end
+
+function M.shutdown()
+    Cursor.lockState = CursorLockMode.None
+    Cursor.visible = true
+end
+
+return M

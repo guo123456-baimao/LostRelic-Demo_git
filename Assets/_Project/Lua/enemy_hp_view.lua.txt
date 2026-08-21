@@ -1,0 +1,176 @@
+local EventBus = require 'event_bus'
+local UIManager = CS.LostRelic.UIManager
+local ComponentFactory = CS.LostRelic.ComponentFactory
+local Camera = CS.UnityEngine.Camera
+local Screen = CS.UnityEngine.Screen
+local Vector2 = CS.UnityEngine.Vector2
+local Vector3 = CS.UnityEngine.Vector3
+local Quaternion = CS.UnityEngine.Quaternion
+local Color = CS.UnityEngine.Color
+local TextAnchor = CS.UnityEngine.TextAnchor
+
+local M = {}
+local font
+local bars = {}
+local prefab_bars = {}
+
+-- The enemy HP bar is a WorldSpace canvas authored at ~1.6 x 0.18 world units
+-- (canvas localScale ~0.73 x 0.65). A UI.Text fontSize is measured in canvas
+-- units and can't drop below 1, so a fontSize-24 glyph is ~8 world units tall —
+-- dozens of times the bar height. The only way to shrink WorldSpace text on this
+-- canvas is via the text transform's localScale. 0.0045 makes "96/96" ~67% of the
+-- bar height and ~11% of its width, so the number sits inside the bar instead of
+-- ballooning over the enemy. (Tuned to the authored bar scale; keep fontSize 24 so
+-- the glyph atlas stays crisp when scaled down.)
+local HP_TEXT_SCALE = 0.0045
+
+local function find_prefab_bar(root_go)
+    if root_go == nil then
+        return nil
+    end
+    local bar_t = root_go.transform:Find("EnemyHpBar")
+    if bar_t == nil then
+        return nil
+    end
+    local fill_t = bar_t:Find("EnemyHpFill")
+    if fill_t == nil then
+        return nil
+    end
+    local fill_rect = ComponentFactory.GetRect(fill_t)
+    if fill_rect == nil then
+        return nil
+    end
+    local text_t = bar_t:Find("EnemyHpText")
+    return {
+        root = ComponentFactory.GetRect(bar_t),
+        fill = fill_rect,
+        full_width = fill_rect.sizeDelta.x,
+        text = text_t ~= nil and ComponentFactory.GetText(text_t) or nil
+    }
+end
+
+function M.init(res_font)
+    font = res_font
+    EventBus.subscribe("OnEnemyHpShow", M.show)
+    EventBus.subscribe("OnEnemyHpUpdate", M.update)
+    EventBus.subscribe("OnEnemyHpHide", M.hide)
+end
+
+function M.show(id, hp, max_hp, root_go, world_pos)
+    local prefab_bar = find_prefab_bar(root_go)
+    CS.UnityEngine.Debug.Log(
+        "[HpBar] show id=" .. id ..
+        " prefab=" .. tostring(prefab_bar ~= nil) ..
+        " text=" .. tostring(prefab_bar ~= nil and prefab_bar.text ~= nil))
+    if prefab_bar ~= nil then
+        prefab_bars[id] = prefab_bar
+        prefab_bar.root.gameObject:SetActive(true)
+        M.update(id, hp, max_hp, root_go, world_pos)
+        return
+    end
+
+    local bar = bars[id]
+    if bar == nil then
+        local root = UIManager.CreatePanel(
+            "EnemyHpBar_" .. id, UIManager.Root, 120, 16,
+            Color(0.05, 0.06, 0.08, 0.9))
+        local fill = UIManager.CreatePanel(
+            "EnemyHpFill_" .. id, root, 120, 12,
+            Color(0.74, 0.20, 0.16, 1))
+        local text = UIManager.CreateText(
+            "EnemyHpText_" .. id, root, "", 12,
+            Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+            Vector2(0, 0), Vector2(120, 14))
+        bar = { root = root, fill = fill, text = text }
+        bars[id] = bar
+    end
+
+    bar.root.gameObject:SetActive(true)
+    M.update(id, hp, max_hp, root_go, world_pos)
+end
+
+function M.update(id, hp, max_hp, root_go, world_pos)
+    local prefab_bar = prefab_bars[id]
+    if prefab_bar ~= nil then
+        max_hp = max_hp or 1
+        local ratio = math.max(0, math.min(1, hp / max_hp))
+        local width = prefab_bar.full_width * ratio
+        prefab_bar.fill.sizeDelta = Vector2(width, prefab_bar.fill.sizeDelta.y)
+        local camera = Camera.main
+        if camera ~= nil then
+            prefab_bar.root.rotation = Quaternion.LookRotation(
+                prefab_bar.root.position - camera.transform.position,
+                Vector3.up)
+        end
+        if prefab_bar.text ~= nil then
+            prefab_bar.text.fontSize = 24
+            prefab_bar.text.transform.localScale =
+                Vector3(HP_TEXT_SCALE, HP_TEXT_SCALE, 1)
+            prefab_bar.text.horizontalOverflow =
+                CS.UnityEngine.HorizontalWrapMode.Overflow
+            prefab_bar.text.verticalOverflow =
+                CS.UnityEngine.VerticalWrapMode.Overflow
+            prefab_bar.text.text =
+                tostring(math.floor(hp)) .. "/" .. tostring(max_hp)
+            if not prefab_bar.logged then
+                prefab_bar.logged = true
+                CS.UnityEngine.Debug.Log(
+                    "[HpBar] text size=" .. prefab_bar.text.fontSize ..
+                    " scale=" .. prefab_bar.text.transform.localScale.x)
+            end
+        end
+        return
+end
+
+    local bar = bars[id]
+    if bar == nil then
+        return
+    end
+
+    max_hp = max_hp or 1
+    local ratio = math.max(0, math.min(1, hp / max_hp))
+    local width = 120 * ratio
+    bar.fill.sizeDelta = Vector2(width, 12)
+    bar.fill.anchoredPosition = Vector2(-60 + width / 2, 0)
+    bar.text.text = tostring(math.floor(hp)) .. "/" .. tostring(max_hp)
+
+    if world_pos then
+        local camera = Camera.main
+        if camera ~= nil then
+            local screen = camera:WorldToScreenPoint(world_pos + Vector3(0, 1.0, 0))
+            if screen.z > 0 then
+                bar.root.anchoredPosition = Vector2(
+                    screen.x - Screen.width / 2,
+                    screen.y - Screen.height / 2)
+            end
+        end
+    end
+end
+
+function M.hide(id)
+    local prefab_bar = prefab_bars[id]
+    if prefab_bar then
+        prefab_bar.root.gameObject:SetActive(false)
+    end
+    local bar = bars[id]
+    if bar then
+        bar.root.gameObject:SetActive(false)
+    end
+end
+
+function M.shutdown()
+    for id, bar in pairs(prefab_bars) do
+        if bar.root then
+            bar.root.gameObject:SetActive(false)
+        end
+    end
+    prefab_bars = {}
+    for id, bar in pairs(bars) do
+        if bar.root then
+            CS.UnityEngine.Object.Destroy(bar.root.gameObject)
+        end
+    end
+    bars = {}
+end
+
+return M

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "quest_main",
+    "name": "找回猫头鹰雕像",
+    "desc": "在遗迹中找到 4 只猫头鹰雕像。",
+    "targets": [
+      { "itemId": "item_owl_1", "count": 1 },
+      { "itemId": "item_owl_2", "count": 1 },
+      { "itemId": "item_owl_3", "count": 1 },
+      { "itemId": "item_owl_4", "count": 1 }
+    ],
+    "onComplete": "dialog_end"
+  }
+]

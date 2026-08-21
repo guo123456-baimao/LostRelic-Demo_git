@@ -1,0 +1,128 @@
+local EventBus = require 'event_bus'
+local InputService = CS.LostRelic.InputService
+local KeyCode = CS.UnityEngine.KeyCode
+
+local M = {}
+local dialogs = {}
+
+local function utf8_len(s)
+    local i = 1
+    local count = 0
+    while i <= #s do
+        local b = s:byte(i)
+        if b >= 0xF0 then
+            i = i + 4
+        elseif b >= 0xE0 then
+            i = i + 3
+        elseif b >= 0xC0 then
+            i = i + 2
+        else
+            i = i + 1
+        end
+        count = count + 1
+    end
+    return count
+end
+
+local function utf8_sub(s, n)
+    local i = 1
+    local count = 0
+    while i <= #s and count < n do
+        local b = s:byte(i)
+        if b >= 0xF0 then
+            i = i + 4
+        elseif b >= 0xE0 then
+            i = i + 3
+        elseif b >= 0xC0 then
+            i = i + 2
+        else
+            i = i + 1
+        end
+        count = count + 1
+    end
+    return s:sub(1, i - 1)
+end
+
+function M.init(configs)
+    dialogs = {}
+    for i = 1, #configs do
+        dialogs[configs[i].id] = configs[i]
+    end
+    M.active = false
+    EventBus.subscribe("OnRequestDialog", M.start)
+end
+
+function M.start(dialog_id)
+    local dialog = dialogs[dialog_id]
+    if dialog == nil or M.active then
+        return
+    end
+
+    M.dialog = dialog
+    M.line_index = 1
+    M.char_index = 0
+    M.type_timer = 0
+    M.active = true
+
+    EventBus.publish("OnDialogStart", dialog.id)
+    EventBus.publish("OnPlayerLockRequest", true)
+    EventBus.publish("OnDialogViewOpen", dialog.lines[1].speaker, "")
+end
+
+function M.update(dt)
+    if not M.active or M.dialog == nil then
+        return
+    end
+
+    local line = M.dialog.lines[M.line_index]
+    local total = utf8_len(line.text)
+
+    if M.char_index < total then
+        M.type_timer = M.type_timer + dt
+        local target = math.floor(M.type_timer * 36)
+        if target > total then
+            target = total
+        end
+        EventBus.publish("OnDialogViewOpen", line.speaker, utf8_sub(line.text, target))
+        M.char_index = target
+
+        if InputService.GetKeyDown(KeyCode.E) or InputService.GetMouseButtonDown(0) then
+            M.char_index = total
+            EventBus.publish("OnDialogViewOpen", line.speaker, line.text)
+        end
+    else
+        if InputService.GetKeyDown(KeyCode.E) or InputService.GetMouseButtonDown(0) then
+            M.line_index = M.line_index + 1
+            if M.line_index > #M.dialog.lines then
+                M.finish()
+                return
+            end
+            M.char_index = 0
+            M.type_timer = 0
+            EventBus.publish("OnDialogViewOpen", M.dialog.lines[M.line_index].speaker, "")
+        end
+    end
+end
+
+function M.finish()
+    local dialog = M.dialog
+    local on_complete = dialog.onComplete
+    M.active = false
+    M.dialog = nil
+
+    EventBus.publish("OnDialogViewClose")
+    EventBus.publish("OnDialogEnd", dialog.id)
+    if on_complete ~= "game_end" then
+        EventBus.publish("OnPlayerLockRequest", false)
+    end
+
+    if on_complete ~= nil and on_complete ~= "" then
+        EventBus.publish("OnDialogAction", on_complete)
+    end
+end
+
+function M.is_active()
+    return M.active
+end
+
+return M

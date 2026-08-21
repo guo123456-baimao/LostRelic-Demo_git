@@ -1,0 +1,141 @@
+local EventBus = require 'event_bus'
+local UIManager = CS.LostRelic.UIManager
+local ComponentFactory = CS.LostRelic.ComponentFactory
+local ResService = CS.LostRelic.ResService
+local Vector2 = CS.UnityEngine.Vector2
+local Color = CS.UnityEngine.Color
+local TextAnchor = CS.UnityEngine.TextAnchor
+local Cursor = CS.UnityEngine.Cursor
+local CursorLockMode = CS.UnityEngine.CursorLockMode
+
+local M = {}
+local font
+local panel_sprite
+
+local root
+local prompt_text
+local dialog_panel
+local dialog_speaker
+local dialog_body
+local end_panel
+local end_text
+
+local on_restart_callback
+local buttons = {}
+
+function M.init(res_font, res_panel)
+    font = res_font
+    panel_sprite = res_panel
+
+    root = UIManager.Root
+
+    prompt_text = UIManager.CreateText(
+        "InteractPrompt", root, "", 28,
+        Color(1, 0.9, 0.55, 1), font, TextAnchor.LowerCenter,
+        Vector2(0, 64), Vector2(1000, 64))
+
+    dialog_panel = UIManager.CreatePanel(
+        "DialogPanel", root, 1500, 250,
+        Color(0.09, 0.11, 0.14, 0.96))
+    dialog_panel.anchoredPosition = Vector2(0, -380)
+    local dialog_bg = UIManager.CreateImage(
+        "DialogBg", dialog_panel,
+        ResService.LoadSprite("Assets/Assets/UI/UI_White_Blue.png[artdecoUI_PIPO_wb_1]"),
+        Color(1, 1, 1, 1), Vector2(0, 0), Vector2(1480, 232))
+    dialog_bg.preserveAspect = false
+    dialog_bg.type = CS.UnityEngine.UI.Image.Type.Sliced
+    local dialog_accent = UIManager.CreatePanel(
+        "DialogAccent", dialog_panel, 1420, 5,
+        Color(0.92, 0.68, 0.30, 1))
+    dialog_accent.anchoredPosition = Vector2(0, 116)
+    dialog_speaker = UIManager.CreateText(
+        "DialogSpeaker", dialog_panel, "", 24,
+        Color(0.92, 0.78, 0.42, 1), font, TextAnchor.UpperLeft,
+        Vector2(-460, 92), Vector2(520, 34))
+    dialog_body = UIManager.CreateText(
+        "DialogBody", dialog_panel, "", 27,
+        Color(0.92, 0.93, 0.95, 1), font, TextAnchor.UpperLeft,
+        Vector2(-40, -30), Vector2(1340, 140))
+    dialog_body.lineSpacing = 1.2
+    dialog_panel.gameObject:SetActive(false)
+
+    end_panel = UIManager.CreatePanel(
+        "EndPanel", root, 1200, 520,
+        Color(0.03, 0.04, 0.07, 0.96))
+    end_text = UIManager.CreateText(
+        "EndText", end_panel, "", 34,
+        Color(1, 0.88, 0.55, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 40), Vector2(1000, 280))
+    local restart_button = UIManager.CreatePanel(
+        "RestartButton", end_panel, 240, 64,
+        Color(0.3, 0.55, 0.42, 1))
+    restart_button.anchoredPosition = Vector2(0, -190)
+    local restart_comp = ComponentFactory.AddButton(restart_button.gameObject)
+    buttons[#buttons + 1] = restart_comp
+    restart_comp.onClick:AddListener(function()
+        if on_restart_callback then
+            on_restart_callback()
+        end
+    end)
+    UIManager.CreateText(
+        "RestartText", restart_button, "重新开始", 28,
+        Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 0), Vector2(240, 64))
+    end_panel.gameObject:SetActive(false)
+
+    EventBus.subscribe("OnInteractPrompt", M.show_prompt)
+    EventBus.subscribe("OnDialogViewOpen", M.open_dialog)
+    EventBus.subscribe("OnDialogViewClose", M.close_dialog)
+end
+
+function M.show_prompt(text)
+    if not prompt_text then
+        return
+    end
+    prompt_text.gameObject:SetActive(text ~= nil and text ~= "")
+    prompt_text.text = text or ""
+end
+
+function M.open_dialog(speaker, text)
+    if not dialog_panel then
+        return
+    end
+    dialog_panel.gameObject:SetActive(true)
+    dialog_speaker.text = speaker or ""
+    dialog_body.text = text or ""
+end
+
+function M.close_dialog()
+    if dialog_panel then
+        dialog_panel.gameObject:SetActive(false)
+    end
+end
+
+function M.show_end(message, on_restart)
+    if not end_panel then
+        return
+    end
+    Cursor.lockState = CursorLockMode.None
+    Cursor.visible = true
+    end_text.text = message or ""
+    on_restart_callback = on_restart
+    end_panel.gameObject:SetActive(true)
+end
+
+function M.hide_end()
+    if end_panel then
+        end_panel.gameObject:SetActive(false)
+    end
+    on_restart_callback = nil
+end
+
+function M.shutdown()
+    for i = 1, #buttons do
+        if buttons[i] ~= nil then
+            buttons[i].onClick:RemoveAllListeners()
+        end
+    end
+    buttons = {}
+end
+
+return M

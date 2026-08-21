@@ -1,0 +1,372 @@
+local EventBus = require 'event_bus'
+local ResService = CS.LostRelic.ResService
+local GameObject = CS.UnityEngine.GameObject
+local ComponentFactory = CS.LostRelic.ComponentFactory
+local UIManager = CS.LostRelic.UIManager
+local Vector2 = CS.UnityEngine.Vector2
+local Color = CS.UnityEngine.Color
+local TextAnchor = CS.UnityEngine.TextAnchor
+
+local M = {}
+local font
+local panel_sprite
+local bar_bg
+local bar_fill
+local bar_text
+local hp_bar_fill
+local attr_panel
+local value_texts = {}
+local panel_open = false
+local tab_attr
+local tab_inventory
+local tab_quest
+
+local BAR_WIDTH = 360
+local BAR_HEIGHT = 20
+local bar_bg_width = BAR_WIDTH
+local hp_bar_bg_width = 220
+
+local function log_missing(label, go)
+    if go == nil then
+        CS.UnityEngine.Debug.LogWarning("[UI] attr missing " .. label)
+    end
+end
+
+function M.bind_scene_ui()
+    local attr_go = ComponentFactory.FindIncludingInactive("PlayerAttrPanel")
+    local bar_go = ComponentFactory.FindIncludingInactive("PlayerHpBar")
+    local tab_inv_go = ComponentFactory.FindIncludingInactive("AttrTabInventory")
+    local tab_attr_go = ComponentFactory.FindIncludingInactive("AttrTabActive")
+    local tab_quest_go = ComponentFactory.FindIncludingInactive("AttrTabQuest")
+    log_missing("PlayerAttrPanel", attr_go)
+    log_missing("PlayerHpBar", bar_go)
+    log_missing("AttrTabInventory", tab_inv_go)
+    log_missing("AttrTabActive", tab_attr_go)
+    log_missing("AttrTabQuest", tab_quest_go)
+    if attr_go == nil or bar_go == nil or tab_inv_go == nil or tab_attr_go == nil then
+        return false
+    end
+    attr_go:SetActive(true)
+    bar_go:SetActive(true)
+    tab_inv_go:SetActive(true)
+    tab_attr_go:SetActive(true)
+
+    if tab_quest_go == nil then
+        local root = UIManager.Root
+        local quest_tab = UIManager.CreatePanel(
+            "AttrTabQuest", root, 150, 60,
+            Color(0.16, 0.22, 0.28, 1))
+        quest_tab.anchoredPosition = Vector2(-560, -30)
+        UIManager.CreateText(
+            "AttrTabQuestText", quest_tab, "任务面板", 20,
+            Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+            Vector2(0, 0), Vector2(150, 60))
+        tab_quest_go = quest_tab.gameObject
+    else
+        tab_quest_go:SetActive(true)
+    end
+
+    attr_panel = attr_go.transform
+    bar_bg = ComponentFactory.GetRect(bar_go.transform)
+    if bar_bg ~= nil and bar_bg.sizeDelta ~= nil then
+        bar_bg_width = bar_bg.sizeDelta.x
+    end
+    local fill_go = ComponentFactory.FindIncludingInactive("PlayerHpFill")
+    local text_go = ComponentFactory.FindIncludingInactive("PlayerHpText")
+    log_missing("PlayerHpFill", fill_go)
+    log_missing("PlayerHpText", text_go)
+    if fill_go == nil or text_go == nil then
+        return false
+    end
+    bar_fill = ComponentFactory.GetRect(fill_go.transform)
+    bar_text = ComponentFactory.GetText(text_go.transform)
+
+    value_texts = {}
+    value_texts.hp = ComponentFactory.GetText(attr_panel:Find("AttrCard1/AttrCardValueHp"))
+    value_texts.attack = ComponentFactory.GetText(attr_panel:Find("AttrCard2/AttrCardValueAttack"))
+    value_texts.defense = ComponentFactory.GetText(attr_panel:Find("AttrCard3/AttrCardValueDefense"))
+    value_texts.speed = ComponentFactory.GetText(attr_panel:Find("AttrCard4/AttrCardValueSpeed"))
+    if value_texts.hp == nil then
+        CS.UnityEngine.Debug.LogWarning("[UI] attr missing AttrCard1/AttrCardValueHp")
+    end
+    if value_texts.attack == nil then
+        CS.UnityEngine.Debug.LogWarning("[UI] attr missing AttrCard2/AttrCardValueAttack")
+    end
+    if value_texts.defense == nil then
+        CS.UnityEngine.Debug.LogWarning("[UI] attr missing AttrCard3/AttrCardValueDefense")
+    end
+    if value_texts.speed == nil then
+        CS.UnityEngine.Debug.LogWarning("[UI] attr missing AttrCard4/AttrCardValueSpeed")
+    end
+    if value_texts.hp == nil or value_texts.attack == nil or
+        value_texts.defense == nil or value_texts.speed == nil then
+        return false
+    end
+
+    hp_bar_fill = ComponentFactory.GetRect(
+        attr_panel:Find("AttrCard1/AttrHpBarBg/AttrHpBarFill"))
+    if hp_bar_fill == nil then
+        CS.UnityEngine.Debug.LogWarning("[UI] attr missing AttrCard1/AttrHpBarBg/AttrHpBarFill")
+    end
+    local hp_bg = ComponentFactory.GetRect(
+        attr_panel:Find("AttrCard1/AttrHpBarBg"))
+    if hp_bg ~= nil and hp_bg.sizeDelta ~= nil then
+        hp_bar_bg_width = hp_bg.sizeDelta.x
+    end
+    tab_inventory = tab_inv_go.transform
+    tab_attr = tab_attr_go.transform
+    tab_quest = tab_quest_go.transform
+    panel_open = false
+    CS.UnityEngine.Debug.Log("[UI] attr scene ui bound")
+
+    local close_go = attr_panel:Find("CloseAttrPanel")
+    if close_go ~= nil then
+        local close_comp = ComponentFactory.AddButton(close_go.gameObject)
+        close_comp.onClick:AddListener(function()
+            EventBus.publish("OnPlayerAttrPanelToggleRequest")
+        end)
+    end
+
+    local inv_tab_comp = ComponentFactory.AddButton(tab_inv_go)
+    inv_tab_comp.onClick:AddListener(function()
+        EventBus.publish("OnPanelCloseRequest")
+        EventBus.publish("OnPanelOpenRequest", "inventory")
+    end)
+    ComponentFactory.AddButton(tab_attr_go)
+    local quest_tab_comp = ComponentFactory.AddButton(tab_quest_go)
+    quest_tab_comp.onClick:AddListener(function()
+        EventBus.publish("OnPanelCloseRequest")
+        EventBus.publish("OnPanelOpenRequest", "quest")
+    end)
+
+    attr_panel.gameObject:SetActive(false)
+    tab_inventory.gameObject:SetActive(false)
+    tab_attr.gameObject:SetActive(false)
+    tab_quest.gameObject:SetActive(false)
+    return true
+end
+
+function M.init(res_font, res_panel)
+    font = res_font
+    panel_sprite = res_panel
+    if M.bind_scene_ui() then
+        EventBus.subscribe("OnPlayerAttributeChanged", M.update)
+        return
+    end
+    CS.UnityEngine.Debug.LogWarning("[UI] attr fallback ui")
+    local frame_sprite = ResService.LoadSprite("Assets/Assets/UI/UI_White_Blue.png")
+    local root = UIManager.Root
+
+    bar_bg = UIManager.CreatePanel(
+        "PlayerHpBar", root, BAR_WIDTH, 26,
+        Color(0.08, 0.10, 0.13, 0.92))
+    bar_bg.anchoredPosition = Vector2(-680, 390)
+    bar_bg_width = BAR_WIDTH
+
+    bar_fill = UIManager.CreatePanel(
+        "PlayerHpFill", bar_bg, BAR_WIDTH, BAR_HEIGHT,
+        Color(0.74, 0.20, 0.16, 1))
+    bar_fill.anchoredPosition = Vector2(0, 0)
+
+    bar_text = UIManager.CreateText(
+        "PlayerHpText", bar_bg, "", 16,
+        Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 0), Vector2(BAR_WIDTH, 22))
+
+    attr_panel = UIManager.CreatePanel(
+        "PlayerAttrPanel", root, 860, 680,
+        Color(0.08, 0.10, 0.13, 0.97))
+    attr_panel.anchoredPosition = Vector2(0, 0)
+
+    UIManager.CreateImage(
+        "AttrPanelBg", attr_panel, frame_sprite,
+        Color(1, 1, 1, 0.95), Vector2(0, 0), Vector2(840, 660))
+
+    local header = UIManager.CreatePanel(
+        "AttrHeader", attr_panel, 820, 72,
+        Color(0.14, 0.17, 0.22, 1))
+    header.anchoredPosition = Vector2(0, 284)
+    local header_accent = UIManager.CreatePanel(
+        "AttrHeaderAccent", header, 6, 44,
+        Color(0.92, 0.68, 0.30, 1))
+    header_accent.anchoredPosition = Vector2(-400, 0)
+    UIManager.CreateText(
+        "PlayerAttrTitle", header, "玩家属性", 30,
+        Color(0.96, 0.84, 0.55, 1), font, TextAnchor.MiddleLeft,
+        Vector2(-250, 0), Vector2(260, 44))
+    UIManager.CreateText(
+        "PlayerAttrSubtitle", header, "基础能力", 18,
+        Color(0.7, 0.74, 0.8, 1), font, TextAnchor.MiddleRight,
+        Vector2(300, 0), Vector2(180, 30))
+
+    local cards = {
+        { key = "hp", label = "生命", x = -185, y = 150 },
+        { key = "attack", label = "攻击", x = 185, y = 150 },
+        { key = "defense", label = "防御", x = -185, y = -10 },
+        { key = "speed", label = "移速", x = 185, y = -10 }
+    }
+    for i = 1, #cards do
+        local card = cards[i]
+        local card_panel = UIManager.CreatePanel(
+            "AttrCard" .. i, attr_panel, 360, 130,
+            Color(0.12, 0.15, 0.19, 0.96))
+        card_panel.anchoredPosition = Vector2(card.x, card.y)
+
+        UIManager.CreateImage(
+            "AttrCardBg" .. i, card_panel, panel_sprite,
+            Color(1, 1, 1, 0.12), Vector2(0, 0), Vector2(360, 130))
+
+        local card_accent = UIManager.CreatePanel(
+            "AttrCardAccent" .. i, card_panel, 6, 84,
+            Color(0.92, 0.68, 0.30, 1))
+        card_accent.anchoredPosition = Vector2(-170, 0)
+
+        UIManager.CreateText(
+            "AttrCardLabel" .. i, card_panel, card.label, 20,
+            Color(0.82, 0.85, 0.9, 1), font, TextAnchor.MiddleLeft,
+            Vector2(-120, 32), Vector2(200, 30))
+        value_texts[card.key] = UIManager.CreateText(
+            "AttrCardValue" .. i, card_panel, "", 34,
+            Color(0.95, 0.82, 0.5, 1), font, TextAnchor.MiddleLeft,
+            Vector2(-120, -24), Vector2(220, 44))
+
+        if card.key == "hp" then
+            local hp_bar_bg = UIManager.CreatePanel(
+                "AttrHpBarBg", card_panel, 220, 16,
+                Color(0.05, 0.06, 0.08, 1))
+            hp_bar_bg.anchoredPosition = Vector2(50, -56)
+            hp_bar_bg_width = 220
+            hp_bar_fill = UIManager.CreatePanel(
+                "AttrHpBarFill", hp_bar_bg, 220, 12,
+                Color(0.74, 0.20, 0.16, 1))
+            hp_bar_fill.anchoredPosition = Vector2(0, 0)
+        end
+    end
+
+    local close_button = UIManager.CreatePanel(
+        "CloseAttrPanel", attr_panel, 130, 48,
+        Color(0.45, 0.22, 0.18, 1))
+    close_button.anchoredPosition = Vector2(350, -300)
+    local close_comp = CS.LostRelic.ComponentFactory.AddButton(close_button.gameObject)
+    close_comp.onClick:AddListener(function()
+        EventBus.publish("OnPlayerAttrPanelToggleRequest")
+    end)
+    UIManager.CreateText(
+        "CloseAttrText", close_button, "关闭", 24,
+        Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 0), Vector2(130, 48))
+
+    tab_inventory = UIManager.CreatePanel(
+        "AttrTabInventory", root, 150, 60,
+        Color(0.16, 0.22, 0.28, 1))
+    tab_inventory.anchoredPosition = Vector2(-560, 150)
+    local inventory_tab_comp = CS.LostRelic.ComponentFactory.AddButton(tab_inventory.gameObject)
+    inventory_tab_comp.onClick:AddListener(function()
+        EventBus.publish("OnPanelCloseRequest")
+        EventBus.publish("OnPanelOpenRequest", "inventory")
+    end)
+    UIManager.CreateText(
+        "AttrTabInventoryText", tab_inventory, "背包面板", 20,
+        Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 0), Vector2(150, 60))
+
+    tab_attr = UIManager.CreatePanel(
+        "AttrTabActive", root, 150, 60,
+        Color(0.32, 0.44, 0.52, 1))
+    tab_attr.anchoredPosition = Vector2(-560, 60)
+    local attr_tab_comp = CS.LostRelic.ComponentFactory.AddButton(tab_attr.gameObject)
+    UIManager.CreateText(
+        "AttrTabText", tab_attr, "属性面板", 20,
+        Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 0), Vector2(150, 60))
+
+    tab_quest = UIManager.CreatePanel(
+        "AttrTabQuest", root, 150, 60,
+        Color(0.16, 0.22, 0.28, 1))
+    tab_quest.anchoredPosition = Vector2(-560, -30)
+    local quest_tab_comp = CS.LostRelic.ComponentFactory.AddButton(tab_quest.gameObject)
+    quest_tab_comp.onClick:AddListener(function()
+        EventBus.publish("OnPanelCloseRequest")
+        EventBus.publish("OnPanelOpenRequest", "quest")
+    end)
+    UIManager.CreateText(
+        "AttrTabQuestText", tab_quest, "任务面板", 20,
+        Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 0), Vector2(150, 60))
+
+    tab_attr.gameObject:SetActive(false)
+    tab_inventory.gameObject:SetActive(false)
+    tab_quest.gameObject:SetActive(false)
+    attr_panel.gameObject:SetActive(false)
+    EventBus.subscribe("OnPlayerAttributeChanged", M.update)
+end
+
+function M.update(attrs)
+    if not bar_fill or not bar_text then
+        return
+    end
+
+    attrs = attrs or {}
+    local max_hp = attrs.maxHp or 100
+    local hp = attrs.hp or 0
+    local ratio = math.max(0, math.min(1, hp / max_hp))
+    local width = (bar_bg_width or BAR_WIDTH) * ratio
+
+    if bar_fill then
+        bar_fill.anchorMin = Vector2(0, 0.5)
+        bar_fill.anchorMax = Vector2(0, 0.5)
+        bar_fill.pivot = Vector2(0, 0.5)
+        bar_fill.anchoredPosition = Vector2(0, 0)
+        bar_fill.sizeDelta = Vector2(width, BAR_HEIGHT)
+    end
+    bar_text.text = tostring(math.floor(hp)) .. "/" .. tostring(max_hp)
+
+    if hp_bar_fill then
+        local hp_width = (hp_bar_bg_width or 220) * ratio
+        hp_bar_fill.anchorMin = Vector2(0, 0.5)
+        hp_bar_fill.anchorMax = Vector2(0, 0.5)
+        hp_bar_fill.pivot = Vector2(0, 0.5)
+        hp_bar_fill.anchoredPosition = Vector2(0, 0)
+        hp_bar_fill.sizeDelta = Vector2(hp_width, 12)
+    end
+
+    value_texts.hp.text = tostring(math.floor(hp)) .. "/" .. tostring(max_hp)
+    value_texts.attack.text = tostring(attrs.attack or 0)
+    value_texts.defense.text = tostring(attrs.defense or 0)
+    value_texts.speed.text = string.format("%.1f", attrs.speed or 0)
+end
+
+function M.open(attrs)
+    if attr_panel then
+        attr_panel.gameObject:SetActive(true)
+        panel_open = true
+        M.update(attrs)
+    end
+    if tab_attr then
+        tab_attr.gameObject:SetActive(true)
+        tab_inventory.gameObject:SetActive(true)
+        tab_quest.gameObject:SetActive(true)
+    end
+end
+
+function M.close()
+    if attr_panel then
+        attr_panel.gameObject:SetActive(false)
+    end
+    if tab_attr then
+        tab_attr.gameObject:SetActive(false)
+        tab_inventory.gameObject:SetActive(false)
+        tab_quest.gameObject:SetActive(false)
+    end
+    panel_open = false
+end
+
+function M.is_open()
+    return panel_open
+end
+
+function M.shutdown()
+    EventBus.unsubscribe("OnPlayerAttributeChanged", M.update)
+end
+
+return M

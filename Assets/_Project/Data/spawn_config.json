@@ -1,0 +1,153 @@
+{
+  "rootName": "__LostRelicDemo",
+  "player": {
+    "prefab": "Assets/Assets/Player/Prefab/Palyer_prefab.prefab",
+    "position": [-13, -4, -48],
+    "rotationY": 90
+  },
+  "npc": {
+    "id": "npc_old_guide",
+    "prefab": "Assets/Assets/Old Guide/Old Guide/Characters/fbx/Mage.fbx",
+    "position": [-15, -4, -51],
+    "rotationY": 30,
+    "displayName": "老向导",
+    "prompt": "E 对话"
+  },
+  "owls": [
+    {
+      "id": "item_owl_1",
+      "name": "猫头鹰雕像·一",
+      "prefab": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_1.prefab",
+      "position": [-16, -4, -55],
+      "rotationY": 0
+    },
+    {
+      "id": "item_owl_2",
+      "name": "猫头鹰雕像·二",
+      "prefab": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_2.prefab",
+      "position": [-30, -4, -50],
+      "rotationY": 0
+    },
+    {
+      "id": "item_owl_3",
+      "name": "猫头鹰雕像·三",
+      "prefab": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_3.prefab",
+      "position": [-49, -4, -50],
+      "rotationY": 0
+    },
+    {
+      "id": "item_owl_4",
+      "name": "猫头鹰雕像·四",
+      "prefab": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_4.prefab",
+      "position": [-44, -4, -72],
+      "rotationY": 0
+    }
+  ],
+  "enemies": [
+    {
+      "id": "enemy_scout_1",
+      "name": "侦察史莱姆",
+      "prefab": "Assets/Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
+      "position": [-33, -4, -54],
+      "rotationY": 135,
+      "alertRadius": 8,
+      "patrolRadius": 4,
+      "chaseRadius": 20,
+      "patrolSpeed": 2.2,
+      "chaseSpeed": 5.0,
+      "idleMin": 1.0,
+      "idleMax": 3.5,
+      "attackDistance": 1.3,
+      "maxHp": 30,
+      "hp": 30,
+      "attack": 4,
+      "defense": 0,
+      "attackRange": 1.5,
+      "attackInterval": 1.1
+    },
+    {
+      "id": "enemy_scout_2",
+      "name": "侦察史莱姆",
+      "prefab": "Assets/Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
+      "position": [-46, -4, -54],
+      "rotationY": 135,
+      "alertRadius": 8,
+      "patrolRadius": 4,
+      "chaseRadius": 20,
+      "patrolSpeed": 2.2,
+      "chaseSpeed": 5.0,
+      "idleMin": 1.0,
+      "idleMax": 3.5,
+      "attackDistance": 1.3,
+      "maxHp": 30,
+      "hp": 30,
+      "attack": 4,
+      "defense": 0,
+      "attackRange": 1.5,
+      "attackInterval": 1.1
+    },
+    {
+      "id": "enemy_guard_1",
+      "name": "守卫龟",
+      "prefab": "Assets/Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
+      "position": [-50, -4, -56],
+      "rotationY": 135,
+      "alertRadius": 6.5,
+      "patrolRadius": 2,
+      "chaseRadius": 15,
+      "patrolSpeed": 1.2,
+      "chaseSpeed": 2.7,
+      "idleMin": 1.0,
+      "idleMax": 3.5,
+      "attackDistance": 1.5,
+      "maxHp": 66,
+      "hp": 66,
+      "attack": 8,
+      "defense": 3,
+      "attackRange": 1.8,
+      "attackInterval": 1.6
+    },
+    {
+      "id": "enemy_guard_2",
+      "name": "守卫龟",
+      "prefab": "Assets/Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
+      "position": [-44, -4, -64],
+      "rotationY": 135,
+      "alertRadius": 6.5,
+      "patrolRadius": 2,
+      "chaseRadius": 15,
+      "patrolSpeed": 1.2,
+      "chaseSpeed": 2.7,
+      "idleMin": 1.0,
+      "idleMax": 3.5,
+      "attackDistance": 1.5,
+      "maxHp": 66,
+      "hp": 66,
+      "attack": 8,
+      "defense": 3,
+      "attackRange": 1.8,
+      "attackInterval": 1.6
+    },
+    {
+      "id": "enemy_elite_1",
+      "name": "精英守卫",
+      "prefab": "Assets/Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
+      "position": [-44, -4, -68],
+      "rotationY": 135,
+      "alertRadius": 10,
+      "patrolRadius": 1.5,
+      "chaseRadius": 24,
+      "patrolSpeed": 1.6,
+      "chaseSpeed": 3.8,
+      "idleMin": 1.0,
+      "idleMax": 3.5,
+      "attackDistance": 1.6,
+      "maxHp": 96,
+      "hp": 96,
+      "attack": 11,
+      "defense": 4,
+      "attackRange": 1.9,
+      "attackInterval": 1.3
+    }
+  ]
+}

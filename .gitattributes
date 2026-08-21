@@ -1,0 +1,25 @@
+# 统一换行符为 LF。Unity 写出的 YAML（.unity/.prefab/.asset）本身是 LF，
+# Windows 下 git 默认会转成 CRLF，导致整文件被标记为改动、diff 全是噪声。
+* text=auto eol=lf
+
+# 二进制资源：不做换行符转换，也不尝试做文本 diff
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.tga  binary
+*.psd  binary
+*.tif  binary
+*.exr  binary
+*.hdr  binary
+*.wav  binary
+*.mp3  binary
+*.ogg  binary
+*.fbx  binary
+*.obj  binary
+*.blend binary
+*.dll  binary
+*.so   binary
+*.dylib binary
+*.ttf  binary
+*.otf  binary
+*.unitypackage binary

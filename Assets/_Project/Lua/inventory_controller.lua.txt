@@ -1,0 +1,81 @@
+local EventBus = require 'event_bus'
+local model = require 'inventory_model'
+local view = require 'inventory_view'
+
+local M = {}
+
+function M.init(configs)
+    model.init(configs)
+    M.open_flag = false
+    EventBus.subscribe("OnItemPickup", M.add_item)
+    EventBus.subscribe("OnPanelCloseRequest", M.close)
+    EventBus.subscribe("OnPanelOpenRequest", function(target)
+        if target == "inventory" then
+            M.open()
+        end
+    end)
+end
+
+function M.add_item(item_id, count)
+    local ok = model.add_item(item_id, count)
+    if ok then
+        EventBus.publish("OnInventoryChanged", M.snapshot())
+    end
+    return ok
+end
+
+function M.get_count(item_id)
+    return model.get_count(item_id)
+end
+
+function M.has_item(item_id)
+    return model.has_item(item_id)
+end
+
+function M.snapshot()
+    return model.snapshot()
+end
+
+function M.get_capacity()
+    return model.get_capacity()
+end
+
+function M.open()
+    if M.is_open() then
+        return
+    end
+    M.open_flag = true
+    EventBus.publish("OnInventoryOpened")
+    view.open(model.snapshot(), M.select_slot, M.close)
+    EventBus.publish("OnPlayerLockRequest", true)
+    EventBus.publish("OnCameraLookLockRequest", true)
+end
+
+function M.close()
+    if not M.is_open() then
+        return
+    end
+    M.open_flag = false
+    EventBus.publish("OnInventoryClosed")
+    view.close()
+    EventBus.publish("OnPlayerLockRequest", false)
+    EventBus.publish("OnCameraLookLockRequest", false)
+end
+
+function M.toggle()
+    if M.is_open() then
+        M.close()
+    else
+        M.open()
+    end
+end
+
+function M.is_open()
+    return M.open_flag == true
+end
+
+function M.select_slot(slot_data)
+    view.set_detail(slot_data)
+end
+
+return M

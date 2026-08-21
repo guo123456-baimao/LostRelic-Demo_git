@@ -1,0 +1,55 @@
+local EventBus = require 'event_bus'
+local view = require 'quest_view'
+
+local M = {}
+local panel_open = false
+
+function M.init(font, panel_sprite, items_by_id)
+    view.init(font, panel_sprite, items_by_id)
+    panel_open = false
+    EventBus.subscribe("OnQuestPanelToggleRequest", M.toggle_panel)
+    EventBus.subscribe("OnPanelCloseRequest", M.close_panel)
+    EventBus.subscribe("OnPanelOpenRequest", function(target)
+        if target == "quest" then
+            M.open_panel()
+        end
+    end)
+end
+
+function M.toggle_panel()
+    if panel_open then
+        M.close_panel()
+    else
+        M.open_panel()
+    end
+end
+
+function M.open_panel()
+    if panel_open then
+        return
+    end
+    panel_open = true
+    view.open()
+    EventBus.publish("OnPlayerLockRequest", true)
+    EventBus.publish("OnCameraLookLockRequest", true)
+end
+
+function M.close_panel()
+    if not panel_open then
+        return
+    end
+    panel_open = false
+    view.close()
+    EventBus.publish("OnPlayerLockRequest", false)
+    EventBus.publish("OnCameraLookLockRequest", false)
+end
+
+function M.is_open()
+    return panel_open
+end
+
+function M.shutdown()
+    view.shutdown()
+end
+
+return M

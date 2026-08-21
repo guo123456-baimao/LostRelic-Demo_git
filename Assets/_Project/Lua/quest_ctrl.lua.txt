@@ -1,0 +1,122 @@
+local EventBus = require 'event_bus'
+
+local M = {}
+local quests = {}
+
+function M.init(configs)
+    quests = {}
+    for i = 1, #configs do
+        quests[configs[i].id] = configs[i]
+    end
+    M.current = nil
+    M.completed = false
+    EventBus.subscribe("OnInventoryChanged", M.on_inventory_changed)
+    EventBus.subscribe("OnNpcInteract", function()
+        if M.is_completed() then
+            EventBus.publish("OnRequestDialog", "dialog_end")
+        elseif M.is_active() then
+            EventBus.publish("OnRequestDialog", "dialog_mid")
+        else
+            EventBus.publish("OnRequestDialog", "dialog_intro")
+        end
+    end)
+end
+
+function M.start_quest(quest_id)
+    local quest = quests[quest_id]
+    if quest == nil then
+        return
+    end
+    M.current = quest
+    M.completed = false
+    M.progress = {}
+    for i = 1, #quest.targets do
+        M.progress[quest.targets[i].itemId] = 0
+    end
+    EventBus.publish("OnQuestStarted", quest.id)
+    M.update_hud()
+end
+
+function M.on_inventory_changed(snapshot)
+    if M.current == nil or M.completed then
+        return
+    end
+    for i = 1, #snapshot do
+        local slot = snapshot[i]
+        if M.progress[slot.id] ~= nil then
+            M.progress[slot.id] = slot.count
+        end
+    end
+    M.update_hud()
+
+    local total = 0
+    local done = 0
+    for i = 1, #M.current.targets do
+        local target = M.current.targets[i]
+        total = total + target.count
+        local got = M.progress[target.itemId] or 0
+        if got > target.count then
+            got = target.count
+        end
+        done = done + got
+    end
+
+    if done >= total then
+        M.completed = true
+        EventBus.publish("OnQuestCompleted", M.current.id)
+        M.update_hud()
+    end
+end
+
+function M.build_snapshot()
+    if M.current == nil then
+        return nil
+    end
+    local total = 0
+    local done = 0
+    local targets = {}
+    for i = 1, #M.current.targets do
+        local target = M.current.targets[i]
+        total = total + target.count
+        local got = M.progress and M.progress[target.itemId] or 0
+        if got > target.count then
+            got = target.count
+        end
+        done = done + got
+        targets[#targets + 1] = {
+            itemId = target.itemId,
+            count = target.count,
+            current = got
+        }
+    end
+    return {
+        id = M.current.id,
+        name = M.current.name,
+        desc = M.current.desc,
+        targets = targets,
+        done = done,
+        total = total,
+        completed = M.completed == true
+    }
+end
+
+function M.update_hud()
+    EventBus.publish("OnQuestSnapshot", M.build_snapshot())
+end
+
+function M.is_active()
+    return M.current ~= nil and not M.completed
+end
+
+function M.is_completed()
+    return M.completed
+end
+
+function M.current_id()
+    if M.current then
+        return M.current.id
+    end
+    return nil
+end
+
+return M

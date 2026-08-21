@@ -1,0 +1,303 @@
+local EventBus = require 'event_bus'
+local UIManager = CS.LostRelic.UIManager
+local ComponentFactory = CS.LostRelic.ComponentFactory
+local GameObject = CS.UnityEngine.GameObject
+local Vector2 = CS.UnityEngine.Vector2
+local Color = CS.UnityEngine.Color
+local TextAnchor = CS.UnityEngine.TextAnchor
+
+local M = {}
+local font
+local icon_sprite
+local panel_sprite
+local items_by_id = {}
+local panel
+local grid
+local detail_name
+local detail_desc
+local detail_count
+local buttons = {}
+local on_select_callback
+local on_close_callback
+local tab_inventory
+local tab_attr
+local tab_quest
+
+local function log_missing(label, go)
+    if go == nil then
+        CS.UnityEngine.Debug.LogWarning("[UI] inventory missing " .. label)
+    end
+end
+
+function M.bind_scene_ui()
+    local panel_go = ComponentFactory.FindIncludingInactive("InventoryPanel")
+    local grid_go = ComponentFactory.FindIncludingInactive("InventoryGrid")
+    local detail_name_go = ComponentFactory.FindIncludingInactive("DetailName")
+    local detail_desc_go = ComponentFactory.FindIncludingInactive("DetailDesc")
+    local detail_count_go = ComponentFactory.FindIncludingInactive("DetailCount")
+    local tab_inv_go = ComponentFactory.FindIncludingInactive("InventoryTabActive")
+    local tab_attr_go = ComponentFactory.FindIncludingInactive("InventoryTabAttr")
+    local tab_quest_go = ComponentFactory.FindIncludingInactive("InventoryTabQuest")
+    log_missing("InventoryPanel", panel_go)
+    log_missing("InventoryGrid", grid_go)
+    log_missing("DetailName", detail_name_go)
+    log_missing("DetailDesc", detail_desc_go)
+    log_missing("DetailCount", detail_count_go)
+    log_missing("InventoryTabActive", tab_inv_go)
+    log_missing("InventoryTabAttr", tab_attr_go)
+    log_missing("InventoryTabQuest", tab_quest_go)
+    if panel_go == nil or grid_go == nil or detail_name_go == nil or
+        detail_desc_go == nil or detail_count_go == nil or
+        tab_inv_go == nil or tab_attr_go == nil or tab_quest_go == nil then
+        return false
+    end
+    panel_go:SetActive(true)
+    tab_inv_go:SetActive(true)
+    tab_attr_go:SetActive(true)
+    tab_quest_go:SetActive(true)
+
+    panel = panel_go.transform
+    grid = ComponentFactory.GetRect(grid_go.transform)
+    detail_name = ComponentFactory.GetText(detail_name_go.transform)
+    detail_desc = ComponentFactory.GetText(detail_desc_go.transform)
+    detail_count = ComponentFactory.GetText(detail_count_go.transform)
+    tab_inventory = tab_inv_go.transform
+    tab_attr = tab_attr_go.transform
+    tab_quest = tab_quest_go.transform
+
+    local close_go = panel:Find("CloseInventory")
+    if close_go ~= nil then
+        local close_comp = ComponentFactory.AddButton(close_go.gameObject)
+        buttons[#buttons + 1] = close_comp
+        close_comp.onClick:AddListener(function()
+            if on_close_callback then
+                on_close_callback()
+            end
+        end)
+    end
+
+    local attr_comp = ComponentFactory.AddButton(tab_attr_go)
+    buttons[#buttons + 1] = attr_comp
+    attr_comp.onClick:AddListener(function()
+        EventBus.publish("OnPanelCloseRequest")
+        EventBus.publish("OnPanelOpenRequest", "attr")
+    end)
+    local quest_comp = ComponentFactory.AddButton(tab_quest_go)
+    buttons[#buttons + 1] = quest_comp
+    quest_comp.onClick:AddListener(function()
+        EventBus.publish("OnPanelCloseRequest")
+        EventBus.publish("OnPanelOpenRequest", "quest")
+    end)
+    ComponentFactory.AddButton(tab_inv_go)
+
+    panel.gameObject:SetActive(false)
+    tab_inventory.gameObject:SetActive(false)
+    tab_attr.gameObject:SetActive(false)
+    tab_quest.gameObject:SetActive(false)
+    CS.UnityEngine.Debug.Log("[UI] inventory scene ui bound")
+    return true
+end
+
+function M.init(res_font, res_icon, res_panel, config_items)
+    font = res_font
+    icon_sprite = res_icon
+    panel_sprite = res_panel
+    items_by_id = config_items or {}
+    buttons = {}
+
+    if M.bind_scene_ui() then
+        return
+    end
+    CS.UnityEngine.Debug.LogWarning("[UI] inventory fallback ui")
+
+    panel = UIManager.CreatePanel(
+        "InventoryPanel", UIManager.Root, 860, 680,
+        Color(0.06, 0.07, 0.1, 0.96))
+    local title = UIManager.CreateText(
+        "InventoryTitle", panel, "背包", 32,
+        Color(0.95, 0.82, 0.5, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 310), Vector2(300, 50))
+
+    grid = UIManager.CreatePanel(
+        "InventoryGrid", panel, 800, 420,
+        Color(0, 0, 0, 0))
+    grid.anchoredPosition = Vector2(30, 60)
+
+    detail_name = UIManager.CreateText(
+        "DetailName", panel, "", 26,
+        Color(1, 1, 1, 1), font, TextAnchor.UpperLeft,
+        Vector2(-350, -170), Vector2(500, 40))
+    detail_desc = UIManager.CreateText(
+        "DetailDesc", panel, "", 22,
+        Color(0.82, 0.84, 0.88, 1), font, TextAnchor.UpperLeft,
+        Vector2(-350, -220), Vector2(700, 90))
+    detail_count = UIManager.CreateText(
+        "DetailCount", panel, "", 22,
+        Color(0.85, 0.9, 0.95, 1), font, TextAnchor.UpperLeft,
+        Vector2(180, -170), Vector2(300, 40))
+
+    local close_button = UIManager.CreatePanel(
+        "CloseInventory", panel, 130, 48,
+        Color(0.45, 0.22, 0.18, 1))
+    close_button.anchoredPosition = Vector2(350, -300)
+    local close_comp = ComponentFactory.AddButton(close_button.gameObject)
+    buttons[#buttons + 1] = close_comp
+    close_comp.onClick:AddListener(function()
+        if on_close_callback then
+            on_close_callback()
+        end
+    end)
+    UIManager.CreateText(
+        "CloseText", close_button, "关闭", 24,
+        Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 0), Vector2(130, 48))
+
+    local root = UIManager.Root
+    tab_inventory = UIManager.CreatePanel(
+        "InventoryTabActive", root, 150, 60,
+        Color(0.32, 0.44, 0.52, 1))
+    tab_inventory.anchoredPosition = Vector2(-560, 150)
+    local inventory_tab_comp = ComponentFactory.AddButton(tab_inventory.gameObject)
+    buttons[#buttons + 1] = inventory_tab_comp
+    UIManager.CreateText(
+        "InventoryTabText", tab_inventory, "背包面板", 20,
+        Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 0), Vector2(150, 60))
+
+    tab_attr = UIManager.CreatePanel(
+        "InventoryTabAttr", root, 150, 60,
+        Color(0.16, 0.22, 0.28, 1))
+    tab_attr.anchoredPosition = Vector2(-560, 60)
+    local attr_tab_comp = ComponentFactory.AddButton(tab_attr.gameObject)
+    buttons[#buttons + 1] = attr_tab_comp
+    attr_tab_comp.onClick:AddListener(function()
+        EventBus.publish("OnPanelCloseRequest")
+        EventBus.publish("OnPanelOpenRequest", "attr")
+    end)
+    UIManager.CreateText(
+        "InventoryTabAttrText", tab_attr, "属性面板", 20,
+        Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 0), Vector2(150, 60))
+
+    tab_quest = UIManager.CreatePanel(
+        "InventoryTabQuest", root, 150, 60,
+        Color(0.16, 0.22, 0.28, 1))
+    tab_quest.anchoredPosition = Vector2(-560, -30)
+    local quest_tab_comp = ComponentFactory.AddButton(tab_quest.gameObject)
+    buttons[#buttons + 1] = quest_tab_comp
+    quest_tab_comp.onClick:AddListener(function()
+        EventBus.publish("OnPanelCloseRequest")
+        EventBus.publish("OnPanelOpenRequest", "quest")
+    end)
+    UIManager.CreateText(
+        "InventoryTabQuestText", tab_quest, "任务面板", 20,
+        Color(1, 1, 1, 1), font, TextAnchor.MiddleCenter,
+        Vector2(0, 0), Vector2(150, 60))
+
+    tab_inventory.gameObject:SetActive(false)
+    tab_attr.gameObject:SetActive(false)
+    tab_quest.gameObject:SetActive(false)
+    panel.gameObject:SetActive(false)
+end
+
+function M.open(snapshot, on_select, on_close)
+    if panel == nil then
+        return
+    end
+
+    on_select_callback = on_select
+    on_close_callback = on_close
+
+    while grid.childCount > 0 do
+        local child = grid:GetChild(0)
+        child.gameObject:SetActive(false)
+        child:SetParent(nil, false)
+        CS.UnityEngine.Object.Destroy(child.gameObject)
+    end
+
+    local index = 0
+    for i = 1, #snapshot do
+        local slot_data = snapshot[i]
+        index = index + 1
+        local col = (index - 1) % 5
+        local row = math.floor((index - 1) / 5)
+        local slot = UIManager.CreatePanel(
+            "Slot" .. index, grid, 96, 96,
+            Color(0.14, 0.16, 0.2, 1))
+        slot.anchoredPosition = Vector2(-330 + col * 165, 180 - row * 170)
+
+        UIManager.CreateImage(
+            "Icon", slot, icon_sprite, Color(1, 1, 1, 1),
+            Vector2(0, 10), Vector2(64, 64))
+
+        local item_config = items_by_id[slot_data.id]
+        local display_name = item_config and item_config.name or slot_data.id
+        UIManager.CreateText(
+            "ItemName", slot, display_name, 15,
+            Color(1, 1, 1, 1), font, TextAnchor.LowerCenter,
+            Vector2(0, -42), Vector2(96, 28))
+
+        if slot_data.count and slot_data.count > 1 then
+            UIManager.CreateText(
+                "ItemCount", slot, "x" .. slot_data.count, 18,
+                Color(1, 0.9, 0.55, 1), font, TextAnchor.LowerRight,
+                Vector2(34, -36), Vector2(56, 30))
+        end
+
+        local button = ComponentFactory.AddButton(slot.gameObject)
+        buttons[#buttons + 1] = button
+        local data = slot_data
+        button.onClick:AddListener(function()
+            if on_select_callback then
+                on_select_callback(data)
+            end
+        end)
+    end
+
+    detail_name.text = ""
+    detail_desc.text = ""
+    detail_count.text = ""
+    panel.gameObject:SetActive(true)
+    if tab_inventory then
+        tab_inventory.gameObject:SetActive(true)
+        tab_attr.gameObject:SetActive(true)
+        tab_quest.gameObject:SetActive(true)
+    end
+end
+
+function M.close()
+    if panel then
+        panel.gameObject:SetActive(false)
+    end
+    if tab_inventory then
+        tab_inventory.gameObject:SetActive(false)
+        tab_attr.gameObject:SetActive(false)
+        tab_quest.gameObject:SetActive(false)
+    end
+    on_select_callback = nil
+    on_close_callback = nil
+end
+
+function M.set_detail(slot_data)
+    if not slot_data then
+        detail_name.text = ""
+        detail_desc.text = ""
+        detail_count.text = ""
+        return
+    end
+    local item_config = items_by_id[slot_data.id]
+    detail_name.text = item_config and item_config.name or slot_data.id
+    detail_desc.text = item_config and item_config.desc or ""
+    detail_count.text = "数量：x" .. tostring(slot_data.count or 1)
+end
+
+function M.shutdown()
+    for i = 1, #buttons do
+        if buttons[i] ~= nil then
+            buttons[i].onClick:RemoveAllListeners()
+        end
+    end
+    buttons = {}
+end
+
+return M

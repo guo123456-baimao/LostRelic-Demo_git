@@ -1,0 +1,46 @@
+local EventCenter = CS.LostRelic.EventCenter
+
+local listeners = {}
+local M = {}
+
+function M.subscribe(event_name, handler)
+    if not listeners[event_name] then
+        listeners[event_name] = {}
+    end
+    table.insert(listeners[event_name], handler)
+end
+
+function M.unsubscribe(event_name, handler)
+    local list = listeners[event_name]
+    if not list then
+        return
+    end
+    for i = #list, 1, -1 do
+        if list[i] == handler then
+            table.remove(list, i)
+            return
+        end
+    end
+end
+
+function M.publish(event_name, ...)
+    local list = listeners[event_name]
+    if list then
+        for i = 1, #list do
+            list[i](...)
+        end
+    end
+    if EventCenter then
+        if select("#", ...) == 0 then
+            EventCenter.Publish(event_name)
+        else
+            EventCenter.Publish(event_name, ...)
+        end
+    end
+end
+
+function M.clear()
+    listeners = {}
+end
+
+return M

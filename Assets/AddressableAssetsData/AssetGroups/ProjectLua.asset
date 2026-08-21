@@ -1,0 +1,124 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: ProjectLua
+  m_EditorClassIdentifier: 
+  m_GroupName: ProjectLua
+  m_Data:
+    m_SerializedData: []
+  m_GUID: d304600ef491b5a469f0750f867df41c
+  m_SerializeEntries:
+  - m_GUID: 3ddbbc44be7ea2a44a4ba37cb10c44b7
+    m_Address: Assets/_Project/Lua/audio_ctrl.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: 655b7214b2246a1448405cbe7bb5bc00
+    m_Address: Assets/_Project/Lua/camera_ctrl.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: cdf26f6f1d067144693aed771e22f1c2
+    m_Address: Assets/_Project/Lua/dialog_ctrl.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: 2c9b89bc531c2f8498966fd95acc452c
+    m_Address: Assets/_Project/Lua/enemy_ctrl.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: bfde31d4676beef4a8388a1a567bb7bc
+    m_Address: Assets/_Project/Lua/event_bus.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: f2719bac10607d0488f15c484735e0eb
+    m_Address: Assets/_Project/Lua/interaction_ctrl.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: a901f52b0e705194fa51ac971a09fce0
+    m_Address: Assets/_Project/Lua/inventory_controller.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: 68c182af0a34eeb41b2cf744824c8d4b
+    m_Address: Assets/_Project/Lua/json_util.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: dd9494a7e9a92b94c89b65f264140dc1
+    m_Address: Assets/_Project/Lua/main.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: ae4123a88ff7939489fc181dc316591e
+    m_Address: Assets/_Project/Lua/player_ctrl.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: cd4d32fe6186b844186186ba67bb09e4
+    m_Address: Assets/_Project/Lua/quest_ctrl.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: 547347c985c7d4b4f9d7a343a6536d8b
+    m_Address: Assets/_Project/Lua/ui_ctrl.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: 4c97cf150a987f94388dd14baa373e28
+    m_Address: Assets/_Project/Lua/inventory_model.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: efdd45afbd966584b9b24470c15be312
+    m_Address: Assets/_Project/Lua/inventory_view.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: 5e92cdafd9f8605478e5083495ca87e8
+    m_Address: Assets/_Project/Lua/player_attr.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: eccac19e4a5606a4bbc4a2c9eaa315e2
+    m_Address: Assets/_Project/Lua/player_attr_controller.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: a4859aa500eb3d647b48352670254887
+    m_Address: Assets/_Project/Lua/player_attr_view.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: 265f7bff547d52d4aa3e30e82610041e
+    m_Address: Assets/_Project/Lua/enemy_hp_view.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: ef435b01dc7f2ea4d80f55cc32164b9e
+    m_Address: Assets/_Project/Lua/quest_panel_controller.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  - m_GUID: b4b989362068d5a4dbdc8d2f1e3433a9
+    m_Address: Assets/_Project/Lua/quest_view.lua.txt
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - lua
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: aad796c676fdeb746ba07285a80977ca, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 24f0e02ce3f88d44c9374c046d8d7d8b, type: 2}

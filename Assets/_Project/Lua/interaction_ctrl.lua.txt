@@ -1,0 +1,75 @@
+local EventBus = require 'event_bus'
+local InputService = CS.LostRelic.InputService
+local Vector3 = CS.UnityEngine.Vector3
+local KeyCode = CS.UnityEngine.KeyCode
+local Time = CS.UnityEngine.Time
+local ComponentFactory = CS.LostRelic.ComponentFactory
+
+local M = {}
+local targets = {}
+local last_scan = -10
+local player
+
+function M.init(player_go)
+    player = player_go
+    EventBus.subscribe("OnInteract", M.handle)
+    M.scan()
+end
+
+function M.scan()
+    targets = {}
+    ComponentFactory.RefreshInteractables()
+    local count = ComponentFactory.GetInteractableCount()
+    for i = 0, count - 1 do
+        targets[#targets + 1] = ComponentFactory.GetInteractable(i)
+    end
+    last_scan = Time.time
+end
+
+function M.update()
+    if player == nil then
+        return
+    end
+
+    if Time.time - last_scan > 0.25 then
+        M.scan()
+    end
+
+    local nearest = nil
+    local best = 2.8
+    local player_position = player.transform.position
+    for i = 1, #targets do
+        local target = targets[i]
+        if target ~= nil and not target.disabled and target.gameObject.activeInHierarchy then
+            local distance = Vector3.Distance(player_position, target.transform.position)
+            if distance < best then
+                best = distance
+                nearest = target
+            end
+        end
+    end
+
+    if nearest then
+        EventBus.publish("OnInteractPrompt", nearest.prompt)
+        if InputService.GetKeyDown(KeyCode.E) then
+            EventBus.publish("OnInteract", nearest)
+        end
+    else
+        EventBus.publish("OnInteractPrompt", "")
+    end
+end
+
+function M.handle(target)
+    if target == nil then
+        return
+    end
+
+    if target.type == "item" then
+        EventBus.publish("OnItemPickup", target.id, 1)
+        target.gameObject:SetActive(false)
+    elseif target.type == "npc" then
+        EventBus.publish("OnNpcInteract", target.id)
+    end
+end
+
+return M

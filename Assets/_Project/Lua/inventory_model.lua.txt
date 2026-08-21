@@ -1,0 +1,69 @@
+local M = {}
+local slots = {}
+local capacity = 20
+local item_configs = {}
+
+function M.init(configs)
+    item_configs = configs or {}
+    slots = {}
+end
+
+function M.add_item(item_id, count)
+    local config = item_configs[item_id]
+    if config == nil or count == nil or count <= 0 then
+        return false
+    end
+
+    if config.stackable then
+        for i = 1, #slots do
+            if slots[i].id == item_id then
+                slots[i].count = slots[i].count + count
+                return true
+            end
+        end
+    else
+        for i = 1, #slots do
+            if slots[i].id == item_id then
+                return false
+            end
+        end
+    end
+
+    if #slots >= capacity then
+        return false
+    end
+
+    table.insert(slots, { id = item_id, count = count })
+    return true
+end
+
+function M.get_count(item_id)
+    for i = 1, #slots do
+        if slots[i].id == item_id then
+            return slots[i].count
+        end
+    end
+    return 0
+end
+
+function M.has_item(item_id)
+    return M.get_count(item_id) > 0
+end
+
+function M.snapshot()
+    local copy = {}
+    for i = 1, #slots do
+        copy[i] = { id = slots[i].id, count = slots[i].count }
+    end
+    return copy
+end
+
+function M.get_config(item_id)
+    return item_configs[item_id]
+end
+
+function M.get_capacity()
+    return capacity
+end
+
+return M

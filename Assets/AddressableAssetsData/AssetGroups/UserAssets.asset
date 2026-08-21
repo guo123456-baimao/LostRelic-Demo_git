@@ -1,0 +1,179 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: UserAssets
+  m_EditorClassIdentifier: 
+  m_GroupName: UserAssets
+  m_Data:
+    m_SerializedData: []
+  m_GUID: e460cd6c2e5385246a40c7a99c77a9a5
+  m_SerializeEntries:
+  - m_GUID: 900a1527ede688546b67b9c82b8f4715
+    m_Address: Assets/Assets/UI/UI_background.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: 288775d1aa25875418a3f3fd7acb01f5
+    m_Address: Assets/Assets/UI/UI_Green_Transperent.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: b74cd7c92b66ff949804935b8e1b2a2a
+    m_Address: Assets/Assets/UI/UI_HealthBar.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: 1f038efaafd8bff4194e5ef38be4e67b
+    m_Address: Assets/Assets/UI/UI_SkillTree.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: 05cde80bbd6c9484e9d631b053c1e502
+    m_Address: Assets/Assets/UI/UI_White_Blue.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: 9c219e936a4117a4b9658c1e40f8bc84
+    m_Address: Assets/Assets/UI/UI_White_Transperent.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: 16dcc94508854574889d26653c5d770c
+    m_Address: Assets/Assets/UI/HUD/bar.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: 16a5c481aee20f344be7f0ffdb461c0d
+    m_Address: Assets/Assets/UI/HUD/bar_background.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: 826dda4e978ab274a8677210b252df0a
+    m_Address: Assets/Assets/UI/HUD/health_bar.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: 7317f0e620e2df948a12e2ff38460e7d
+    m_Address: Assets/Assets/UI/HUD/weapon_icon.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: be55291aae08d434db3da3b59db3ab4a
+    m_Address: Assets/Assets/Icons/#2 - Transparent Icons & Drop Shadow.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+    - user
+  - m_GUID: 9c7355b0cb8a5024bba44738f70d9e74
+    m_Address: Assets/Assets/Icons/BG 3c.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: a9ca9a41598dd2e44b125928045c518f
+    m_Address: Assets/Assets/Icons/BG 6.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: bdeaeacf91e805f449e7fa66d480d644
+    m_Address: Assets/Assets/Icons/BG 7.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+  - m_GUID: 45288819fde2143449a96207b14db0bb
+    m_Address: Assets/Assets/Player/Prefab/Palyer_prefab.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: 2220b5955fd6c084eaf3d4ecc2bbd2da
+    m_Address: Assets/Assets/Old Guide/Old Guide/Characters/fbx/Mage.fbx
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: cb457b8600b258c4abd397e4e4d73025
+    m_Address: Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: 016ae05f3b4eb27418cdbc80e64b2762
+    m_Address: Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_2.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: 7a1461f9f14f2ec428296739df218a5d
+    m_Address: Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_3.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: 8c05c87231144404bab219c8afb91798
+    m_Address: Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_4.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: 928a1377c1cd4515b208fef3a396b8ea
+    m_Address: Assets/Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: f25da656424cb8042a66cb30f005da12
+    m_Address: Assets/Assets/Text.ttf
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: 88f5861c38f36734fbb98a718378beac
+    m_Address: Assets/Assets/Audio/BGM/Background Music.wav
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: e1c5bd6997ee45649b098f90c693e886
+    m_Address: Assets/Assets/Audio/BGM/Enemy Spawned.wav
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: 415fc2f8c8a23a7409c961631317c55e
+    m_Address: Assets/Assets/Audio/Sound Effects/sfx_spell 1.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: 8bc27a3f8c3159749b2e4008dd2ba5c5
+    m_Address: Assets/Assets/Audio/BGM/Sounds/click-b.ogg
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: c28c994d471934b4ca06fa36b910987d
+    m_Address: Assets/Assets/Old Guide/Animator/MageIdle.controller
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: e2aafa8770d34a9591b41bedf4e318ba
+    m_Address: Assets/Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 8e11a102b04af384a9ac6eef8cf48412
+    m_Address: Assets/Assets/Audio/Sound Effects/sfx_attack2.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: 2e96f80570da1214bbedf344e4dff00d
+    m_Address: Assets/Assets/Audio/Sound Effects/sfx_attack3.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  - m_GUID: 39c4c4fcbd86f9f4d81b093e48dc8f90
+    m_Address: Assets/Assets/Audio/Sound Effects/Dagger_stab_Quick__#4-1766764076280.mp3
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - user
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: aad796c676fdeb746ba07285a80977ca, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 228eca4de15421f4d99b861a074de9bb, type: 2}

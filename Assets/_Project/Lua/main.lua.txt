@@ -1,0 +1,219 @@
+local EventBus = require 'event_bus'
+local json = require 'json_util'
+local uiCtrl = require 'ui_ctrl'
+local playerCtrl = require 'player_ctrl'
+local cameraCtrl = require 'camera_ctrl'
+local interactionCtrl = require 'interaction_ctrl'
+local inventoryCtrl = require 'inventory_controller'
+local inventoryView = require 'inventory_view'
+local attrCtrl = require 'player_attr_controller'
+local questPanelCtrl = require 'quest_panel_controller'
+local questCtrl = require 'quest_ctrl'
+local dialogCtrl = require 'dialog_ctrl'
+local enemyCtrl = require 'enemy_ctrl'
+local enemyHpView = require 'enemy_hp_view'
+local audioCtrl = require 'audio_ctrl'
+
+local ResService = CS.LostRelic.ResService
+local DataService = CS.LostRelic.DataService
+local Object = CS.UnityEngine.Object
+local GameObject = CS.UnityEngine.GameObject
+local Vector3 = CS.UnityEngine.Vector3
+local Quaternion = CS.UnityEngine.Quaternion
+local Interactable = CS.LostRelic.Interactable
+local ComponentFactory = CS.LostRelic.ComponentFactory
+local InputService = CS.LostRelic.InputService
+local KeyCode = CS.UnityEngine.KeyCode
+local AudioService = CS.LostRelic.AudioService
+
+local M = {}
+
+local function spawn_prefab(config, name, root_go)
+    local prefab = ResService.LoadPrefab(config.prefab)
+    if prefab == nil then
+        CS.UnityEngine.Debug.LogError("[LostRelic] Missing prefab: " .. config.prefab)
+        return nil
+    end
+
+    local go = Object.Instantiate(prefab)
+    go.name = name
+    if root_go then
+        go.transform:SetParent(root_go.transform, true)
+    end
+    local pos = config.position
+    go.transform.position = Vector3(pos[1], pos[2], pos[3])
+    go.transform.rotation = Quaternion.Euler(0, config.rotationY or 0, 0)
+    return go
+end
+
+local function find_in_scene_or_spawn(config, object_name, root_go)
+    local existing = GameObject.Find(root_go.name .. "/" .. object_name)
+    if existing == nil then
+        existing = GameObject.Find(object_name)
+    end
+    if existing ~= nil then
+        return existing
+    end
+    return spawn_prefab(config, object_name, root_go)
+end
+
+function M.start()
+    local item_configs = json.decode(DataService.LoadJson("item_config.json")) or {}
+    local quest_configs = json.decode(DataService.LoadJson("quest_config.json")) or {}
+    local dialog_configs = json.decode(DataService.LoadJson("dialog_config.json")) or {}
+    local audio_config = json.decode(DataService.LoadJson("audio_config.json")) or {}
+    local spawn_config = json.decode(DataService.LoadJson("spawn_config.json")) or {}
+
+    local items_by_id = {}
+    for i = 1, #item_configs do
+        items_by_id[item_configs[i].id] = item_configs[i]
+    end
+
+    local root_go = GameObject.Find(spawn_config.rootName)
+    if root_go == nil then
+        root_go = GameObject()
+        root_go.name = spawn_config.rootName
+    end
+
+    local player_go = find_in_scene_or_spawn(spawn_config.player, "Player", root_go)
+    local npc_go = find_in_scene_or_spawn(spawn_config.npc, "NPC_OldGuide", root_go)
+    local camera_go = GameObject.Find("Main Camera")
+
+    if player_go == nil or camera_go == nil then
+        CS.UnityEngine.Debug.LogError("[LostRelic] Player or Main Camera missing, aborting start.");
+        return
+    end
+
+    ComponentFactory.AddCharacterController(player_go, 1.7, 0.35, Vector3(0, 0.85, 0))
+
+    if npc_go then
+        ComponentFactory.AddCapsuleCollider(npc_go, 1.8, 0.4, Vector3(0, 0.9, 0))
+        local npc_controller = ResService.LoadAnimatorController("Assets/Assets/Old Guide/Animator/MageIdle.controller")
+        if npc_controller then
+            ComponentFactory.SetAnimatorController(npc_go, npc_controller)
+        end
+        Interactable.Attach(
+            npc_go,
+            spawn_config.npc.id or "npc_old_guide",
+            "npc",
+            spawn_config.npc.displayName or "老向导",
+            spawn_config.npc.prompt or "E 对话",
+            3.0)
+    end
+
+    for i = 1, #spawn_config.owls do
+        local owl_config = spawn_config.owls[i]
+        local owl_go = find_in_scene_or_spawn(owl_config, "Owl_" .. i, root_go)
+        if owl_go then
+            Interactable.Attach(
+                owl_go,
+                owl_config.id,
+                "item",
+                owl_config.name,
+                "E 拾取",
+                2.6)
+        end
+    end
+
+    local font = ResService.LoadFont("Assets/Assets/Text.ttf")
+    local icon_sprite = ResService.LoadSprite("Assets/Assets/Icons/#2 - Transparent Icons & Drop Shadow.png")
+    local panel_sprite = ResService.LoadSprite("Assets/Assets/UI/UI_White_Transperent.png")
+
+    uiCtrl.init(font, panel_sprite)
+    inventoryView.init(font, icon_sprite, panel_sprite, items_by_id)
+    questPanelCtrl.init(font, panel_sprite, items_by_id)
+    enemyHpView.init(font)
+    playerCtrl.init(player_go, camera_go)
+    cameraCtrl.init(camera_go, player_go)
+    attrCtrl.init(font, panel_sprite, {
+        maxHp = 100,
+        hp = 100,
+        attack = 12,
+        defense = 5,
+        speed = 3.6
+    })
+    interactionCtrl.init(player_go)
+    inventoryCtrl.init(items_by_id)
+    questCtrl.init(quest_configs)
+    dialogCtrl.init(dialog_configs)
+    enemyCtrl.init(root_go, player_go, spawn_config.enemies or {})
+    audioCtrl.init(audio_config)
+
+    EventBus.subscribe("OnDialogAction", function(action)
+        if action == "start_quest_main" then
+            questCtrl.start_quest("quest_main")
+        elseif action == "game_end" then
+            uiCtrl.show_end("你找回了四只猫头鹰雕像，遗迹的秘密重见天日。", function()
+                EventBus.publish("OnGameEnd", "restart")
+                CS.UnityEngine.SceneManagement.SceneManager.LoadScene("SampleScene")
+            end)
+        end
+    end)
+    EventBus.subscribe("OnPlayerDied", function()
+        EventBus.publish("OnPlayerLockRequest", true)
+        uiCtrl.show_end("你倒在了遗迹深处……", function()
+            EventBus.publish("OnGameEnd", "restart")
+            CS.UnityEngine.SceneManagement.SceneManager.LoadScene("SampleScene")
+        end)
+    end)
+
+    audioCtrl.register()
+    audioCtrl.play_normal()
+    questCtrl.update_hud()
+
+    EventBus.publish("OnGameStart")
+    dialogCtrl.start("dialog_intro")
+    on_update = function(dt)
+        M.update(dt)
+    end
+    on_shutdown = function()
+        uiCtrl.shutdown()
+        inventoryView.shutdown()
+        questPanelCtrl.shutdown()
+        attrCtrl.shutdown()
+        enemyHpView.shutdown()
+        cameraCtrl.shutdown()
+        EventBus.clear()
+    end
+end
+
+function M.update(dt)
+    cameraCtrl.update(dt)
+    playerCtrl.update(dt)
+
+    if not dialogCtrl.is_active() and not inventoryCtrl.is_open() and
+        not attrCtrl.is_open() and not questPanelCtrl.is_open() then
+        interactionCtrl.update(dt)
+    end
+    if dialogCtrl.is_active() then
+        dialogCtrl.update(dt)
+    end
+    enemyCtrl.update(dt)
+
+    if not dialogCtrl.is_active() then
+        if InputService.GetKeyDown(KeyCode.Tab) then
+            if inventoryCtrl.is_open() then
+                inventoryCtrl.toggle()
+            else
+                EventBus.publish("OnPanelCloseRequest")
+                EventBus.publish("OnPanelOpenRequest", "inventory")
+            end
+        elseif InputService.GetKeyDown(KeyCode.C) then
+            if attrCtrl.is_open() then
+                EventBus.publish("OnPlayerAttrPanelToggleRequest")
+            else
+                EventBus.publish("OnPanelCloseRequest")
+                EventBus.publish("OnPanelOpenRequest", "attr")
+            end
+        elseif InputService.GetKeyDown(KeyCode.J) then
+            if questPanelCtrl.is_open() then
+                EventBus.publish("OnQuestPanelToggleRequest")
+            else
+                EventBus.publish("OnPanelCloseRequest")
+                EventBus.publish("OnPanelOpenRequest", "quest")
+            end
+        end
+    end
+end
+
+return M

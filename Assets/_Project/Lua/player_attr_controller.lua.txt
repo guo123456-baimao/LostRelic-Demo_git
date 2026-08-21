@@ -1,0 +1,84 @@
+local EventBus = require 'event_bus'
+local model = require 'player_attr'
+local view = require 'player_attr_view'
+
+local M = {}
+local panel_open = false
+
+function M.init(font, panel_sprite, config)
+    view.init(font, panel_sprite)
+    model.init(config)
+    panel_open = false
+    M.dead = false
+    EventBus.subscribe("OnPlayerDamaged", M.take_damage)
+    EventBus.subscribe("OnPlayerAttributeChanged", M.on_attribute_changed)
+    EventBus.subscribe("OnPlayerAttrPanelToggleRequest", M.toggle_panel)
+    EventBus.subscribe("OnPanelCloseRequest", M.close_panel)
+    EventBus.subscribe("OnPanelOpenRequest", function(target)
+        if target == "attr" then
+            M.open_panel()
+        end
+    end)
+end
+
+function M.on_attribute_changed(attrs)
+    if attrs == nil then
+        return
+    end
+    if attrs.hp <= 0 and not M.dead then
+        M.dead = true
+        EventBus.publish("OnPlayerDied")
+    elseif attrs.hp > 0 then
+        M.dead = false
+    end
+end
+
+function M.toggle_panel()
+    if panel_open then
+        M.close_panel()
+    else
+        M.open_panel()
+    end
+end
+
+function M.open_panel()
+    if panel_open then
+        return
+    end
+    panel_open = true
+    view.open(model.get())
+    EventBus.publish("OnPlayerLockRequest", true)
+    EventBus.publish("OnCameraLookLockRequest", true)
+end
+
+function M.close_panel()
+    if not panel_open then
+        return
+    end
+    panel_open = false
+    view.close()
+    EventBus.publish("OnPlayerLockRequest", false)
+    EventBus.publish("OnCameraLookLockRequest", false)
+end
+
+function M.is_open()
+    return panel_open
+end
+
+function M.take_damage(amount)
+    model.take_damage(amount)
+end
+
+function M.heal(amount)
+    model.heal(amount)
+end
+
+function M.get_snapshot()
+    return model.get()
+end
+
+function M.shutdown()
+    view.shutdown()
+end
+
+return M

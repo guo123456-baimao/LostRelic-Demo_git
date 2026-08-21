@@ -1,0 +1,61 @@
+local EventBus = require 'event_bus'
+local ResService = CS.LostRelic.ResService
+local AudioService = CS.LostRelic.AudioService
+local M = {}
+local clips = {}
+
+function M.init(config)
+    clips.normal = ResService.LoadAudioClip(config.bgm_normal)
+    clips.enemy = ResService.LoadAudioClip(config.bgm_enemy)
+    clips.pickup = ResService.LoadAudioClip(config.sfx_pickup)
+    clips.open_inventory = ResService.LoadAudioClip(config.sfx_open_inventory)
+    clips.attack_hit = ResService.LoadAudioClip(config.sfx_attack_hit)
+    clips.attack_miss = ResService.LoadAudioClip(config.sfx_attack_miss)
+    clips.enemy_attack = ResService.LoadAudioClip(config.sfx_enemy_attack)
+end
+
+function M.play_normal()
+    if clips.normal then
+        AudioService.PlayBgm(clips.normal)
+    end
+end
+
+function M.register()
+    EventBus.subscribe("OnEnemyAlert", function()
+        if clips.enemy then
+            AudioService.PlayBgm(clips.enemy)
+        end
+    end)
+    EventBus.subscribe("OnEnemyClear", function()
+        if clips.normal then
+            AudioService.PlayBgm(clips.normal)
+        end
+    end)
+    EventBus.subscribe("OnItemPickup", function()
+        if clips.pickup then
+            AudioService.PlayOneShot(clips.pickup)
+        end
+    end)
+    EventBus.subscribe("OnInventoryOpened", function()
+        if clips.open_inventory then
+            AudioService.PlayOneShot(clips.open_inventory)
+        end
+    end)
+    EventBus.subscribe("OnPlayerAttackHit", function()
+        if clips.attack_hit then
+            AudioService.PlayOneShot(clips.attack_hit)
+        end
+    end)
+    EventBus.subscribe("OnPlayerAttackMiss", function()
+        if clips.attack_miss then
+            AudioService.PlayOneShot(clips.attack_miss)
+        end
+    end)
+    EventBus.subscribe("OnPlayerDamaged", function()
+        if clips.enemy_attack then
+            AudioService.PlayOneShot(clips.enemy_attack)
+        end
+    end)
+end
+
+return M

@@ -1,0 +1,9 @@
+{
+  "bgm_normal": "Assets/Assets/Audio/BGM/Background Music.wav",
+  "bgm_enemy": "Assets/Assets/Audio/BGM/Enemy Spawned.wav",
+  "sfx_pickup": "Assets/Assets/Audio/Sound Effects/sfx_spell 1.mp3",
+  "sfx_attack_hit": "Assets/Assets/Audio/Sound Effects/sfx_attack2.mp3",
+  "sfx_attack_miss": "Assets/Assets/Audio/Sound Effects/sfx_attack3.mp3",
+  "sfx_enemy_attack": "Assets/Assets/Audio/Sound Effects/Dagger_stab_Quick__#4-1766764076280.mp3",
+  "sfx_open_inventory": "Assets/Assets/Audio/BGM/Sounds/click-b.ogg"
+}

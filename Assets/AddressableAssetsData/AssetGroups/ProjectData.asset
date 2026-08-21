@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: ProjectData
+  m_EditorClassIdentifier: 
+  m_GroupName: ProjectData
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 5ddddceb165540a47b7e84bb7878e6c8
+  m_SerializeEntries:
+  - m_GUID: 19f3326f3a4b26e45a7c2348604d50a7
+    m_Address: Assets/_Project/Data/audio_config.json
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - data
+  - m_GUID: bb98b8b1d7cbd5045b210d2bae7a7614
+    m_Address: Assets/_Project/Data/dialog_config.json
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - data
+  - m_GUID: 4a698bd7ada40774cb1beabe58316902
+    m_Address: Assets/_Project/Data/item_config.json
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - data
+  - m_GUID: c0e5666cfaf9b5c4996f608957e15231
+    m_Address: Assets/_Project/Data/quest_config.json
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - data
+  - m_GUID: ef1e89357adc4444688c01913cb770e2
+    m_Address: Assets/_Project/Data/spawn_config.json
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - data
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: aad796c676fdeb746ba07285a80977ca, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: ade067f8f6ffb304ba901954e94f3554, type: 2}

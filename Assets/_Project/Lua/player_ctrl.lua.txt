@@ -1,0 +1,117 @@
+local EventBus = require 'event_bus'
+local InputService = CS.LostRelic.InputService
+local Vector3 = CS.UnityEngine.Vector3
+local Quaternion = CS.UnityEngine.Quaternion
+local KeyCode = CS.UnityEngine.KeyCode
+local ComponentFactory = CS.LostRelic.ComponentFactory
+
+local M = {}
+
+function M.init(player_go, camera_go)
+    M.player = player_go
+    M.camera_transform = camera_go.transform
+    M.camera_yaw = 0
+    M.base_speed = 3.6
+    M.attack_value = 12
+    M.controller = ComponentFactory.AddCharacterController(player_go, 1.7, 0.35, Vector3(0, 0.85, 0))
+    M.animator = ComponentFactory.GetAnimator(player_go)
+    M.vertical_velocity = 0
+    M.current_anim = ""
+    M.lock_count = 0
+    M.locked = false
+    M.next_attack = 1
+
+    EventBus.subscribe("OnPlayerLockRequest", function(locked)
+        if locked then
+            M.lock_count = M.lock_count + 1
+        else
+            M.lock_count = math.max(0, M.lock_count - 1)
+        end
+        M.locked = M.lock_count > 0
+    end)
+    EventBus.subscribe("OnCameraYawChanged", function(yaw)
+        M.camera_yaw = yaw or 0
+    end)
+    EventBus.subscribe("OnPlayerAttributeChanged", function(attrs)
+        M.base_speed = (attrs and attrs.speed) or 3.6
+        M.attack_value = (attrs and attrs.attack) or 12
+    end)
+end
+
+function M.set_locked(locked)
+    M.locked = locked
+end
+
+function M.is_locked()
+    return M.locked
+end
+
+function M.get_position()
+    if M.player then
+        return M.player.transform.position
+    end
+    return Vector3.zero
+end
+
+function M.update(dt)
+    if M.locked or M.player == nil or M.controller == nil then
+        return
+    end
+
+    local input_x = InputService.GetAxisRaw("Horizontal")
+    local input_z = InputService.GetAxisRaw("Vertical")
+
+    local camera_forward = M.camera_transform.forward
+    local forward = Vector3(camera_forward.x, 0, camera_forward.z)
+    if forward.magnitude > 0.001 then
+        forward = forward.normalized
+    end
+
+    local camera_right = M.camera_transform.right
+    local right = Vector3(camera_right.x, 0, camera_right.z)
+    if right.magnitude > 0.001 then
+        right = right.normalized
+    end
+
+    local move = forward * input_z + right * input_x
+    if move.magnitude > 1 then
+        move = move.normalized
+    end
+
+    local running = InputService.GetKey(KeyCode.LeftShift) or
+        InputService.GetKey(KeyCode.RightShift)
+    local base_speed = M.base_speed or 3.6
+    local speed = running and (base_speed * 2.0) or base_speed
+
+    if M.controller.isGrounded then
+        M.vertical_velocity = -1
+        if InputService.GetKeyDown(KeyCode.Space) then
+            M.vertical_velocity = 7
+        end
+    else
+        M.vertical_velocity = M.vertical_velocity - 22 * dt
+    end
+
+    local motion = Vector3(move.x * speed, M.vertical_velocity, move.z * speed)
+    M.controller:Move(motion * dt)
+
+    local yaw = M.camera_yaw or 0
+    M.player.transform.rotation = Quaternion.Euler(0, yaw, 0)
+
+    if M.animator ~= nil then
+        local state_info = M.animator:GetCurrentAnimatorStateInfo(0)
+        local attacking = state_info ~= nil and
+            (state_info:IsName("Attack01") or state_info:IsName("Attack02"))
+
+        if InputService.GetMouseButtonDown(0) and not attacking then
+            local trigger = M.next_attack == 1 and "Attack01" or "Attack02"
+            M.animator:SetTrigger(trigger)
+            M.next_attack = 3 - M.next_attack
+            EventBus.publish("OnPlayerAttack", M.attack_value or 12)
+        end
+
+        M.animator:SetFloat("Speed", move.magnitude * speed)
+    end
+end
+
+return M
