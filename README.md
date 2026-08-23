@@ -86,6 +86,12 @@ if (string.IsNullOrEmpty(text)) text = ResService.LoadText(address);
 | `item_config.json` | 道具定义与堆叠规则 |
 | `audio_config.json` | BGM / SFX 映射 |
 
+敌人数值走**逐字段合并**：JSON 里写了的键覆盖组件（`0` 也算写了），没写的键保留
+Inspector 上手调的值。这层合并放在 Lua（`enemy_ctrl.lua` 的 `apply_config_overrides`）
+而不是 C# 里，因为 `EnemyAlertZone.Attach(..., config.attack or 5, ...)` 的 `or`
+已经把「策划没填」和「策划填了默认值」压成同一个数了，到 C# 侧再也分不开。注册日志行
+尾会写明这组数值来自 JSON 还是 Inspector，省掉「改了没生效」的来回排查。
+
 ---
 
 ## 几段真实的排查记录

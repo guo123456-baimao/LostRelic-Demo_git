@@ -22,13 +22,17 @@ namespace LostRelic
         public float attackInterval = 1.2f;
         public Transform enemyRoot;
 
-        // The Inspector is the source of truth for enemy tuning: enemy_ctrl.lua
-        // reads every number below off this component, so editing a 遗迹守卫_N in
-        // the Hierarchy is what changes its behaviour. The spawn_config.json
-        // numbers are only bootstrap defaults, applied when this component does
-        // not exist yet (a brand-new enemy). `enemyId` and `enemyRoot` are the
-        // exception -- they are plumbing, not tuning, and are always rewritten
-        // from the config so HP-bar events stay uniquely keyed.
+        // Tuning precedence, per field: spawn_config.json wins wherever it
+        // specifies a key, and the Inspector wins wherever it does not. That
+        // merge lives in enemy_ctrl.lua (apply_config_overrides), NOT here -- by
+        // the time Attach is called the Lua side has already substituted
+        // defaults for absent keys, so these parameters genuinely cannot tell
+        // "the designer omitted this" from "the designer wrote the default".
+        // They are therefore only used to seed a component that does not exist
+        // yet (a brand-new enemy dragged into the scene). `enemyId` and
+        // `enemyRoot` are the exception -- they are plumbing, not tuning, and
+        // are always rewritten from the config so HP-bar events stay uniquely
+        // keyed.
         public static EnemyAlertZone Attach(
             GameObject target,
             string enemyId,

@@ -206,6 +206,55 @@ local function enter_idle(enemy)
     play_anim(enemy, "IdleNormal")
 end
 
+-- spawn_config.json key -> EnemyAlertZone field. The two names differ only for
+-- alertRadius/radius; the rest match, and the pairs are listed explicitly so a
+-- typo in the config can never silently write some unrelated field.
+local ZONE_FIELDS = {
+    { "alertRadius",    "radius" },
+    { "patrolRadius",   "patrolRadius" },
+    { "chaseRadius",    "chaseRadius" },
+    { "patrolSpeed",    "patrolSpeed" },
+    { "chaseSpeed",     "chaseSpeed" },
+    { "idleMin",        "idleMin" },
+    { "idleMax",        "idleMax" },
+    { "attackDistance", "attackDistance" },
+    { "maxHp",          "maxHp" },
+    { "hp",             "hp" },
+    { "attack",         "attack" },
+    { "defense",        "defense" },
+    { "attackRange",    "attackRange" },
+    { "attackInterval", "attackInterval" },
+}
+
+-- Precedence, per key: a key present in spawn_config.json wins; a key left out
+-- keeps whatever is authored on the component in the Inspector. That is the
+-- whole point of doing this in Lua rather than back inside Attach() -- Attach
+-- receives `config.attack or 5`, which has already collapsed "the designer
+-- omitted this" into "the designer wrote the default", so it cannot tell the
+-- two apart. Here `config[key] ~= nil` still can. Note 0 is a legitimate value
+-- (defense 0 on the scouts), so this must be a nil test, never `or`.
+local function apply_config_overrides(zone, config)
+    local applied = {}
+    for i = 1, #ZONE_FIELDS do
+        local json_key = ZONE_FIELDS[i][1]
+        local field = ZONE_FIELDS[i][2]
+        local value = config[json_key]
+        if value ~= nil then
+            zone[field] = value
+            applied[#applied + 1] = json_key
+        end
+    end
+
+    -- Raising maxHp without restating hp should mean "starts at full", not
+    -- "starts at the old maxHp". Without this, bumping maxHp 66 -> 200 in the
+    -- config would spawn a guard at 66/200 and look like the edit half-applied.
+    if config.maxHp ~= nil and config.hp == nil then
+        zone.hp = zone.maxHp
+    end
+
+    return applied
+end
+
 function M.init(root_go, player_go, enemy_configs)
     player = player_go
     enemies = {}
@@ -278,10 +327,16 @@ function M.init(root_go, player_go, enemy_configs)
                 config.attackRange or 1.5,
                 config.attackInterval or 1.2)
 
-            -- The zone component is the tuning authority: everything numeric is
-            -- read back off it so editing 遗迹守卫_N in the Inspector is what
-            -- changes behaviour. EnemyAlertZone.Attach only seeds those fields
-            -- from spawn_config.json when the component did not exist yet.
+            -- Attach() above only seeds a component that did not exist yet, so
+            -- for the shipped enemies (both prefabs bake one) it does nothing
+            -- but wire the id. The config channel is this call: it writes the
+            -- keys spawn_config.json actually specifies onto the component, so a
+            -- designer can retune the encounter without opening Unity, while any
+            -- key left out of the config still honours the Inspector.
+            local from_config = apply_config_overrides(zone, config)
+
+            -- Everything numeric is then read back off the component, which is
+            -- what both channels have written to.
             local alert_radius = zone.radius
             if alert_radius <= 0 then
                 alert_radius = 7
@@ -366,6 +421,20 @@ function M.init(root_go, player_go, enemy_configs)
                 enemy.agent:Warp(spawn_center)
             end
 
+            -- Name the winning channel per enemy. This line is the only place
+            -- that proves which numbers actually took effect, so it has to say
+            -- where they came from -- "I edited the Inspector and nothing
+            -- changed" is otherwise indistinguishable from a broken config.
+            local source_label
+            if #from_config == 0 then
+                source_label = " (all from Inspector)"
+            elseif #from_config == #ZONE_FIELDS then
+                source_label = " (all from spawn_config.json)"
+            else
+                source_label = " (spawn_config.json: " ..
+                    table.concat(from_config, ",") .. "; rest from Inspector)"
+            end
+
             CS.UnityEngine.Debug.Log(
                 "[Enemy] registered " .. enemy.id ..
                 " hp=" .. enemy.hp .. "/" .. enemy.max_hp ..
@@ -375,7 +444,7 @@ function M.init(root_go, player_go, enemy_configs)
                 " atkDist=" .. enemy.attack_distance ..
                 " alert=" .. enemy.alert_radius ..
                 " chase=" .. enemy.chase_radius ..
-                " (from Inspector)")
+                source_label)
             stop_agent(enemy)
             play_anim(enemy, "IdleNormal")
         end

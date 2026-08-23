@@ -42,11 +42,39 @@
 
 ## 当前占位与替换点
 
-- v1 无战斗，敌人只触发 BGM 切换；后续可扩展追击/战斗。
 - 终局使用简单 UI 面板，未提供终局特效。
 - 4 只猫头鹰共用同一张图标 `Assets/Assets/Icons/#2 - Transparent Icons & Drop Shadow.png`。
-- 出生点与警戒区坐标集中在 `Assets/_Project/Data/spawn_config.json`，可在
-  场景内实测后直接修改。
+- 玩家数值仍写死在 `Lua/main.lua.txt` 的 `attrCtrl.init` 调用里，尚未接入 JSON；
+  其中 `defense` 只用于面板显示，不参与任何减伤计算。
+
+## 调数值（不必打开 Unity）
+
+敌人的 14 项数值可以直接改 `Data/spawn_config.json` 的 `enemies[]`，**改完进 Play
+即生效**，不用重建 Addressables（编辑器下 `DataService` 直读源文件）。
+
+优先级是**逐字段**的：
+
+| 该字段在 JSON 里 | 生效值 |
+| --- | --- |
+| 写了 | JSON 的值（`0` 也算写了） |
+| 没写 | 场景实例 `遗迹守卫_N` 的 Inspector 值，其次是 prefab 默认值 |
+
+所以既可以用 JSON 整体铺一版数值，也可以只写想改的几项、其余保留手调结果。
+合并逻辑在 `Lua/enemy_ctrl.lua.txt` 的 `apply_config_overrides`。
+
+两条约束：
+
+- `attackRange` 必须 ≥ `attackDistance`，否则敌人会停在自己的攻击距离之外，
+  导航到位却永远打不到人。
+- 只改 `maxHp` 不写 `hp` 时按满血出生；要开局残血就把 `hp` 一起写上。
+
+进 Play 后 Console 每个敌人一行 `[Enemy] registered …`，行尾会写明这组数值
+是 `(all from spawn_config.json)` 还是 `(all from Inspector)`，或者列出被 JSON
+覆盖的具体字段名 —— 改了没生效时先看这一行。
+
+敌人的**坐标**不在这条通道上：11 个 actor 都是场景里已编排好的实例，
+`spawn_config.json` 的 `position` / `rotationY` / `prefab` 只在场景里找不到同名
+对象时才会用到，改它们不会移动现有敌人。
 
 ## 已知提示
 

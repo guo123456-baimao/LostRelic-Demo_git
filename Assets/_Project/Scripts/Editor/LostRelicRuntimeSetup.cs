@@ -288,10 +288,11 @@ namespace LostRelic.EditorTools
             agent.updateRotation = true;
             agent.updatePosition = true;
 
-            // Enemy tuning is Inspector-authoritative: enemy_ctrl.lua reads every
-            // number off this component at spawn, so this tool must not stamp
-            // defaults over what is authored on the prefab. It only guarantees the
-            // component exists and that its plumbing -- id and root -- is wired.
+            // enemy_ctrl.lua reads every number off this component at spawn, and
+            // the Inspector is what supplies any field spawn_config.json leaves
+            // out, so this tool must not stamp defaults over what is authored on
+            // the prefab. It only guarantees the component exists and that its
+            // plumbing -- id and root -- is wired.
             var zone = root.GetComponent<EnemyAlertZone>();
             if (zone == null)
             {
