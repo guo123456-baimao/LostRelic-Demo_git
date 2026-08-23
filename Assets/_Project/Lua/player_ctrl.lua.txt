@@ -1,4 +1,5 @@
 local EventBus = require 'event_bus'
+local playerAttr = require 'player_attr'
 local InputService = CS.LostRelic.InputService
 local Vector3 = CS.UnityEngine.Vector3
 local Quaternion = CS.UnityEngine.Quaternion
@@ -11,8 +12,13 @@ function M.init(player_go, camera_go)
     M.player = player_go
     M.camera_transform = camera_go.transform
     M.camera_yaw = 0
-    M.base_speed = 3.6
-    M.attack_value = 12
+    -- Seeded from player_attr rather than from literals, so the five player
+    -- numbers exist in exactly one place. main.lua calls playerCtrl.init before
+    -- attrCtrl.init, so this is the value in force for the few lines until the
+    -- first OnPlayerAttributeChanged lands -- no update tick happens in between.
+    local attrs = playerAttr.get()
+    M.base_speed = attrs.speed
+    M.attack_value = attrs.attack
     M.controller = ComponentFactory.AddCharacterController(player_go, 1.7, 0.35, Vector3(0, 0.85, 0))
     M.animator = ComponentFactory.GetAnimator(player_go)
     M.vertical_velocity = 0
@@ -33,8 +39,20 @@ function M.init(player_go, camera_go)
         M.camera_yaw = yaw or 0
     end)
     EventBus.subscribe("OnPlayerAttributeChanged", function(attrs)
-        M.base_speed = (attrs and attrs.speed) or 3.6
-        M.attack_value = (attrs and attrs.attack) or 12
+        -- Keep the previous value when a field is missing instead of falling back
+        -- to a literal: `attrs.speed or 3.6` would turn a deliberate speed of 0
+        -- back into 3.6, which is the same absence-vs-zero confusion the enemy
+        -- channel had. player_attr always publishes all five, so in practice
+        -- these guards only cover a malformed publish.
+        if attrs == nil then
+            return
+        end
+        if attrs.speed ~= nil then
+            M.base_speed = attrs.speed
+        end
+        if attrs.attack ~= nil then
+            M.attack_value = attrs.attack
+        end
     end)
 end
 
@@ -80,7 +98,10 @@ function M.update(dt)
 
     local running = InputService.GetKey(KeyCode.LeftShift) or
         InputService.GetKey(KeyCode.RightShift)
-    local base_speed = M.base_speed or 3.6
+    -- No `or 3.6` here: base_speed is seeded from player_attr in init and only
+    -- ever reassigned from a non-nil publish, so a literal fallback could not
+    -- fire -- it could only mask a deliberate speed of 0.
+    local base_speed = M.base_speed
     local speed = running and (base_speed * 2.0) or base_speed
 
     if M.controller.isGrounded then
@@ -107,7 +128,7 @@ function M.update(dt)
             local trigger = M.next_attack == 1 and "Attack01" or "Attack02"
             M.animator:SetTrigger(trigger)
             M.next_attack = 3 - M.next_attack
-            EventBus.publish("OnPlayerAttack", M.attack_value or 12)
+            EventBus.publish("OnPlayerAttack", M.attack_value)
         end
 
         M.animator:SetFloat("Speed", move.magnitude * speed)

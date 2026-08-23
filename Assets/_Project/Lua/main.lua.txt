@@ -125,13 +125,11 @@ function M.start()
     enemyHpView.init(font)
     playerCtrl.init(player_go, camera_go)
     cameraCtrl.init(camera_go, player_go)
-    attrCtrl.init(font, panel_sprite, {
-        maxHp = 100,
-        hp = 100,
-        attack = 12,
-        defense = 5,
-        speed = 3.6
-    })
+    -- Player numbers come from spawn_config.json's player.stats block. Keys it
+    -- leaves out fall back to the defaults inside player_attr, which is now the
+    -- only place those numbers live -- so there is deliberately no literal here.
+    local player_stats = spawn_config.player and spawn_config.player.stats or {}
+    attrCtrl.init(font, panel_sprite, player_stats)
     interactionCtrl.init(player_go)
     inventoryCtrl.init(items_by_id)
     questCtrl.init(quest_configs)

@@ -3,7 +3,14 @@
   "player": {
     "prefab": "Assets/Assets/Player/Prefab/Palyer_prefab.prefab",
     "position": [-13, -4, -48],
-    "rotationY": 90
+    "rotationY": 90,
+    "stats": {
+      "maxHp": 100,
+      "hp": 100,
+      "attack": 12,
+      "defense": 5,
+      "speed": 3.6
+    }
   },
   "npc": {
     "id": "npc_old_guide",

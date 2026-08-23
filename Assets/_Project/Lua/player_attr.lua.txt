@@ -1,7 +1,12 @@
 local EventBus = require 'event_bus'
 
 local M = {}
-local attrs = {
+
+-- The player's baseline numbers, and the only place they are written down.
+-- spawn_config.json's player.stats block overrides these per key; anything it
+-- leaves out falls back here. main.lua used to carry a second copy of the same
+-- five numbers, which is how the JSON block and the code drift apart.
+local DEFAULTS = {
     maxHp = 100,
     hp = 100,
     attack = 12,
@@ -9,13 +14,67 @@ local attrs = {
     speed = 3.6
 }
 
+local attrs = {}
+for key, value in pairs(DEFAULTS) do
+    attrs[key] = value
+end
+
 function M.init(config)
     config = config or {}
-    attrs.maxHp = config.maxHp or 100
-    attrs.hp = config.hp or attrs.maxHp
-    attrs.attack = config.attack or 12
-    attrs.defense = config.defense or 5
-    attrs.speed = config.speed or 3.6
+
+    -- Per-key merge, the same rule the enemy channel uses: a key present in the
+    -- JSON wins, a key omitted keeps the default. It has to be a nil test and
+    -- not `or`, because 0 is a legitimate value (defense 0) and `or` would
+    -- silently swap it back for the default.
+    local from_config = {}
+    for key, default in pairs(DEFAULTS) do
+        local value = config[key]
+        if value ~= nil then
+            attrs[key] = value
+            from_config[#from_config + 1] = key
+        else
+            attrs[key] = default
+        end
+    end
+
+    -- Raising maxHp without restating hp means "starts at full", so 100 -> 150
+    -- does not put the player at 100/150. Same rule as the enemies.
+    if config.hp == nil then
+        attrs.hp = attrs.maxHp
+    end
+
+    -- A misspelt key would otherwise do nothing whatsoever, with no clue why the
+    -- edit had no effect, so name it rather than ignore it.
+    local unknown = {}
+    for key in pairs(config) do
+        if DEFAULTS[key] == nil then
+            unknown[#unknown + 1] = tostring(key)
+        end
+    end
+
+    table.sort(from_config)
+    table.sort(unknown)
+
+    local source
+    if #from_config == 0 then
+        source = " (all defaults)"
+    else
+        source = " (spawn_config.json: " .. table.concat(from_config, ",") .. ")"
+    end
+    if #unknown > 0 then
+        source = source .. "  !! unrecognised key(s) ignored: " ..
+            table.concat(unknown, ",")
+    end
+
+    -- defense is deliberately reported even though nothing consumes it yet:
+    -- take_damage subtracts the raw amount, so the number is panel decoration.
+    CS.UnityEngine.Debug.Log(
+        "[Player] stats hp=" .. attrs.hp .. "/" .. attrs.maxHp ..
+        " atk=" .. attrs.attack ..
+        " def=" .. attrs.defense .. "(unused)" ..
+        " speed=" .. attrs.speed ..
+        source)
+
     M.publish()
 end
 

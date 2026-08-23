@@ -80,7 +80,7 @@ if (string.IsNullOrEmpty(text)) text = ResService.LoadText(address);
 
 | 文件 | 内容 |
 |---|---|
-| `spawn_config.json` | 出生点、敌人属性、警戒/追击/巡逻半径 |
+| `spawn_config.json` | 出生点、玩家属性、敌人属性、警戒/追击/巡逻半径 |
 | `quest_config.json` | 主线任务与完成条件 |
 | `dialog_config.json` | 对话文本与 `onComplete` 动作 |
 | `item_config.json` | 道具定义与堆叠规则 |
@@ -91,6 +91,11 @@ Inspector 上手调的值。这层合并放在 Lua（`enemy_ctrl.lua` 的 `apply
 而不是 C# 里，因为 `EnemyAlertZone.Attach(..., config.attack or 5, ...)` 的 `or`
 已经把「策划没填」和「策划填了默认值」压成同一个数了，到 C# 侧再也分不开。注册日志行
 尾会写明这组数值来自 JSON 还是 Inspector，省掉「改了没生效」的来回排查。
+
+玩家的 5 项数值（`player.stats`）走同一套规则，兜底值集中在 `player_attr.lua` 的
+`DEFAULTS`。这里同样避开了 `or`：`attack` 和 `speed` 会经
+`OnPlayerAttributeChanged` 流到 `player_ctrl`，而 `M.base_speed = attrs.speed or 3.6`
+这种写法会把刻意配的 `0` 换回 3.6，所以改成了 nil 判断。
 
 ---
 

@@ -44,37 +44,48 @@
 
 - 终局使用简单 UI 面板，未提供终局特效。
 - 4 只猫头鹰共用同一张图标 `Assets/Assets/Icons/#2 - Transparent Icons & Drop Shadow.png`。
-- 玩家数值仍写死在 `Lua/main.lua.txt` 的 `attrCtrl.init` 调用里，尚未接入 JSON；
-  其中 `defense` 只用于面板显示，不参与任何减伤计算。
+- 玩家 `defense` 只用于面板显示，不参与减伤：`player_attr.take_damage` 直接扣掉
+  敌人的裸攻击。全程也没有任何回血入口（`M.heal` 没有调用方），100 血是整局资源。
 
 ## 调数值（不必打开 Unity）
 
-敌人的 14 项数值可以直接改 `Data/spawn_config.json` 的 `enemies[]`，**改完进 Play
-即生效**，不用重建 Addressables（编辑器下 `DataService` 直读源文件）。
+敌人和玩家的数值都可以直接改 `Data/spawn_config.json`，**改完进 Play 即生效**，
+不用重建 Addressables（编辑器下 `DataService` 直读源文件）。
 
-优先级是**逐字段**的：
+- 敌人：`enemies[]` 里每个条目的 14 项
+- 玩家：`player.stats` 的 5 项（`maxHp` / `hp` / `attack` / `defense` / `speed`）
+
+优先级是**逐字段**的，两条通道规则一致：
 
 | 该字段在 JSON 里 | 生效值 |
 | --- | --- |
 | 写了 | JSON 的值（`0` 也算写了） |
-| 没写 | 场景实例 `遗迹守卫_N` 的 Inspector 值，其次是 prefab 默认值 |
+| 没写 | 敌人取场景实例 `遗迹守卫_N` 的 Inspector 值；玩家取 `player_attr.lua` 里的 `DEFAULTS` |
 
-所以既可以用 JSON 整体铺一版数值，也可以只写想改的几项、其余保留手调结果。
-合并逻辑在 `Lua/enemy_ctrl.lua.txt` 的 `apply_config_overrides`。
+所以既可以整体铺一版数值，也可以只写想改的几项。合并逻辑分别在
+`Lua/enemy_ctrl.lua.txt` 的 `apply_config_overrides` 和 `Lua/player_attr.lua.txt`
+的 `M.init`。
 
-两条约束：
+三条约束：
 
-- `attackRange` 必须 ≥ `attackDistance`，否则敌人会停在自己的攻击距离之外，
+- 敌人的 `attackRange` 必须 ≥ `attackDistance`，否则敌人会停在自己的攻击距离之外，
   导航到位却永远打不到人。
-- 只改 `maxHp` 不写 `hp` 时按满血出生；要开局残血就把 `hp` 一起写上。
+- 只改 `maxHp` 不写 `hp` 时按满血出生；要开局残血就把 `hp` 一起写上（敌人玩家同理）。
+- 玩家疾跑是走速 ×2.0，写死在 `player_ctrl.lua.txt`，不在 JSON 里。
 
-进 Play 后 Console 每个敌人一行 `[Enemy] registered …`，行尾会写明这组数值
-是 `(all from spawn_config.json)` 还是 `(all from Inspector)`，或者列出被 JSON
-覆盖的具体字段名 —— 改了没生效时先看这一行。
+进 Play 后 Console 会打出：
 
-敌人的**坐标**不在这条通道上：11 个 actor 都是场景里已编排好的实例，
+- 每个敌人一行 `[Enemy] registered …`，行尾写明这组数值是
+  `(all from spawn_config.json)` 还是 `(all from Inspector)`，或者列出被 JSON
+  覆盖的具体字段名
+- 玩家一行 `[Player] stats hp=…/… atk=… def=…(unused) speed=… (spawn_config.json: …)`，
+  键名拼错时这一行会追加 `!! unrecognised key(s) ignored: …`
+
+改了没生效时先看这两行。
+
+敌人和玩家的**坐标**不在这条通道上：11 个 actor 都是场景里已编排好的实例，
 `spawn_config.json` 的 `position` / `rotationY` / `prefab` 只在场景里找不到同名
-对象时才会用到，改它们不会移动现有敌人。
+对象时才会用到，改它们不会移动现有对象。
 
 ## 已知提示
 
