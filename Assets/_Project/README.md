@@ -13,6 +13,8 @@
    `main.lua` 与全部配置。
    玩家 Animator 首次编译后会由编辑器脚本自动补上 `Speed` 参数和
    Idle/Walk/Run 过渡；如未生效可手动执行 `LostRelic/Setup Player Animator`。
+   该脚本是幂等的：过渡已经正确时不写文件、也不打日志，手动执行会回
+   `already correct, nothing written`。
 3. 如需把 Bootstrap 显式保存进场景，可执行菜单
    `LostRelic/Build Demo Scene`。
 

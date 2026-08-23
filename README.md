@@ -159,6 +159,21 @@ Umbra 只把体素完全填满的格子标记为不透明，薄壳撑不满任�
 另外，URP 下 SRP Batcher 已生效，再开 GPU Instancing 没有额外收益；
 阴影参数读的是 Pipeline Asset，不是 `QualitySettings`。
 
+### 5. 每次打开工程，Animator 文件都变脏
+
+现象：`DogControl.controller` 每次重新加载工程都出现在 `git status` 里，diff 一百多行，
+读起来像是过渡条件被人改过（`m_ConditionEvent` 从 `Attack02` 变成 `Speed` 之类）。
+
+机制：`PlayerAnimatorSetup` 是 `[InitializeOnLoad]`，每次加载都跑一遍装配；而它的做法是
+先 `RemoveTransitions()` 再重新 `AddTransition()`。**删除再新增会重新分配 fileID**，
+于是 YAML 里 18 个 transition 的锚点全变、块的排列顺序也变，文件字节不同而语义完全一致。
+逐行 diff 之所以像"改了条件"，是 git 把两个互不相干的块对齐到了一起 —— 这种 diff 不能直接读，
+得按状态名和条件做语义比对才知道真假。
+
+解法是让装配**幂等**：先把期望的 13 条过渡（源状态、目标状态、`hasExitTime`、时长、
+按顺序的条件列表）构造成数据，和资产里现有的逐条比对，一致就在 `SetDirty` 之前直接返回。
+只有真的不一致才走删除重建。菜单手动执行时会打印 `already correct, nothing written`。
+
 ---
 
 ## 运行

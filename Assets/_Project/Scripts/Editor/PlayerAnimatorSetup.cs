@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
@@ -9,18 +10,60 @@ namespace LostRelic.EditorTools
     {
         private const string PlayerControllerPath =
             "Assets/Assets/Player/Animator/DogControl.controller";
+        private const float TransitionDuration = 0.15f;
+        private const float AttackExitTime = 0.85f;
+        private const float WalkThreshold = 0.1f;
+        private const float RunThreshold = 5f;
+
+        private class Cond
+        {
+            public AnimatorConditionMode Mode;
+            public string Parameter;
+            public float Threshold;
+        }
+
+        private class TransitionSpec
+        {
+            public AnimatorState From;
+            public AnimatorState To;
+            public bool HasExitTime;
+            public float ExitTime;
+            public Cond[] Conditions;
+        }
 
         static PlayerAnimatorSetup()
         {
             EditorApplication.delayCall += EnsurePlayerAnimator;
         }
 
-        [MenuItem("LostRelic/Setup Player Animator")]
         public static void EnsurePlayerAnimator()
+        {
+            Run(false);
+        }
+
+        [MenuItem("LostRelic/Setup Player Animator")]
+        public static void SetupFromMenu()
+        {
+            Run(true);
+        }
+
+        // Runs on every editor load via InitializeOnLoad, so it must not write
+        // unless something is actually wrong. It used to unconditionally
+        // RemoveTransitions() and re-add, and deleting plus re-adding mints fresh
+        // fileIDs for every AnimatorStateTransition -- so the .controller came out
+        // byte-different on every single load, showed up dirty in git forever, and
+        // its diff read like edited conditions when nothing had changed. Now the
+        // desired shape is built as data first and compared; the rebuild only
+        // happens when the comparison fails.
+        private static void Run(bool verbose)
         {
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(PlayerControllerPath);
             if (controller == null)
             {
+                if (verbose)
+                {
+                    Debug.LogWarning("[LostRelic] Player animator not found: " + PlayerControllerPath);
+                }
                 return;
             }
 
@@ -33,52 +76,256 @@ namespace LostRelic.EditorTools
                 return;
             }
 
-            EnsureParameter(controller, "Speed", AnimatorControllerParameterType.Float);
+            var attack01 = FindState(controller, "Attack01");
+            var attack02 = FindState(controller, "Attack02");
+            var withAttacks = attack01 != null && attack02 != null;
+            if (!withAttacks)
+            {
+                Debug.LogWarning("[LostRelic] Player attack states not found, skip attack setup.");
+            }
+
+            var parametersAdded = EnsureParameter(
+                controller, "Speed", AnimatorControllerParameterType.Float);
+            if (withAttacks)
+            {
+                if (EnsureParameter(controller, "Attack01", AnimatorControllerParameterType.Trigger))
+                {
+                    parametersAdded = true;
+                }
+                if (EnsureParameter(controller, "Attack02", AnimatorControllerParameterType.Trigger))
+                {
+                    parametersAdded = true;
+                }
+            }
+
             var speed = FindParameter(controller, "Speed");
             if (speed == null)
             {
                 return;
             }
 
-            RemoveTransitions(idle);
-            RemoveTransitions(walk);
-            RemoveTransitions(run);
-
-            AddTransition(idle, walk, speed, AnimatorConditionMode.Greater, 0.1f);
-            AddTransition(walk, idle, speed, AnimatorConditionMode.Less, 0.1f);
-            AddTransition(walk, run, speed, AnimatorConditionMode.Greater, 5f);
-            var runToWalk = AddTransition(run, walk, speed, AnimatorConditionMode.Less, 5f);
-            runToWalk.AddCondition(AnimatorConditionMode.Greater, 0.1f, speed.name);
-            AddTransition(run, idle, speed, AnimatorConditionMode.Less, 0.1f);
-
-            var attack01 = FindState(controller, "Attack01");
-            var attack02 = FindState(controller, "Attack02");
-            if (attack01 != null && attack02 != null)
+            // Every state this tool clears transitions on, i.e. every state whose
+            // transition list it owns outright. Defend/Die/Dizzy/GetHit and the
+            // rest are authored in the asset and never touched.
+            var owned = new List<AnimatorState> { idle, walk, run };
+            if (withAttacks)
             {
-                EnsureParameter(controller, "Attack01", AnimatorControllerParameterType.Trigger);
-                EnsureParameter(controller, "Attack02", AnimatorControllerParameterType.Trigger);
-
-                RemoveTransitions(attack01);
-                RemoveTransitions(attack02);
-
-                AddTriggerTransition(idle, attack01, "Attack01");
-                AddTriggerTransition(walk, attack01, "Attack01");
-                AddTriggerTransition(run, attack01, "Attack01");
-                AddTriggerTransition(idle, attack02, "Attack02");
-                AddTriggerTransition(walk, attack02, "Attack02");
-                AddTriggerTransition(run, attack02, "Attack02");
-
-                AddExitTransition(attack01, idle);
-                AddExitTransition(attack02, idle);
+                owned.Add(attack01);
+                owned.Add(attack02);
             }
-            else
+
+            var specs = BuildSpecs(idle, walk, run, attack01, attack02, withAttacks, speed.name);
+            var transitionsOk = Matches(owned, specs);
+
+            if (transitionsOk && !parametersAdded)
             {
-                Debug.LogWarning("[LostRelic] Player attack states not found, skip attack setup.");
+                if (verbose)
+                {
+                    Debug.Log("[LostRelic] DogControl.controller already correct, nothing written.");
+                }
+                return;
+            }
+
+            if (!transitionsOk)
+            {
+                for (var i = 0; i < owned.Count; i++)
+                {
+                    RemoveTransitions(owned[i]);
+                }
+                for (var i = 0; i < specs.Count; i++)
+                {
+                    Apply(specs[i]);
+                }
             }
 
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
-            Debug.Log("[LostRelic] DogControl.controller movement and attack transitions ready.");
+            Debug.Log(transitionsOk
+                ? "[LostRelic] DogControl.controller parameters added."
+                : "[LostRelic] DogControl.controller movement and attack transitions rebuilt.");
+        }
+
+        // The order matters and is part of what gets compared: Unity evaluates a
+        // state's transitions in list order, and the existing asset was produced by
+        // this same sequence. Build it once, then either compare or apply it.
+        private static List<TransitionSpec> BuildSpecs(
+            AnimatorState idle,
+            AnimatorState walk,
+            AnimatorState run,
+            AnimatorState attack01,
+            AnimatorState attack02,
+            bool withAttacks,
+            string speedName)
+        {
+            var specs = new List<TransitionSpec>();
+
+            specs.Add(Move(idle, walk, One(
+                AnimatorConditionMode.Greater, speedName, WalkThreshold)));
+            specs.Add(Move(walk, idle, One(
+                AnimatorConditionMode.Less, speedName, WalkThreshold)));
+            specs.Add(Move(walk, run, One(
+                AnimatorConditionMode.Greater, speedName, RunThreshold)));
+            specs.Add(Move(run, walk, new[]
+            {
+                Condition(AnimatorConditionMode.Less, speedName, RunThreshold),
+                Condition(AnimatorConditionMode.Greater, speedName, WalkThreshold)
+            }));
+            specs.Add(Move(run, idle, One(
+                AnimatorConditionMode.Less, speedName, WalkThreshold)));
+
+            if (!withAttacks)
+            {
+                return specs;
+            }
+
+            specs.Add(Move(idle, attack01, One(AnimatorConditionMode.If, "Attack01", 0f)));
+            specs.Add(Move(walk, attack01, One(AnimatorConditionMode.If, "Attack01", 0f)));
+            specs.Add(Move(run, attack01, One(AnimatorConditionMode.If, "Attack01", 0f)));
+            specs.Add(Move(idle, attack02, One(AnimatorConditionMode.If, "Attack02", 0f)));
+            specs.Add(Move(walk, attack02, One(AnimatorConditionMode.If, "Attack02", 0f)));
+            specs.Add(Move(run, attack02, One(AnimatorConditionMode.If, "Attack02", 0f)));
+
+            specs.Add(Exit(attack01, idle));
+            specs.Add(Exit(attack02, idle));
+            return specs;
+        }
+
+        private static Cond Condition(
+            AnimatorConditionMode mode,
+            string parameter,
+            float threshold)
+        {
+            return new Cond { Mode = mode, Parameter = parameter, Threshold = threshold };
+        }
+
+        private static Cond[] One(
+            AnimatorConditionMode mode,
+            string parameter,
+            float threshold)
+        {
+            return new[] { Condition(mode, parameter, threshold) };
+        }
+
+        private static TransitionSpec Move(
+            AnimatorState from,
+            AnimatorState to,
+            Cond[] conditions)
+        {
+            return new TransitionSpec
+            {
+                From = from,
+                To = to,
+                HasExitTime = false,
+                Conditions = conditions
+            };
+        }
+
+        private static TransitionSpec Exit(AnimatorState from, AnimatorState to)
+        {
+            return new TransitionSpec
+            {
+                From = from,
+                To = to,
+                HasExitTime = true,
+                ExitTime = AttackExitTime,
+                Conditions = new Cond[0]
+            };
+        }
+
+        private static bool Matches(List<AnimatorState> owned, List<TransitionSpec> specs)
+        {
+            for (var i = 0; i < owned.Count; i++)
+            {
+                if (!StateMatches(owned[i], specs))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static bool StateMatches(AnimatorState state, List<TransitionSpec> specs)
+        {
+            var expected = new List<TransitionSpec>();
+            for (var i = 0; i < specs.Count; i++)
+            {
+                if (specs[i].From == state)
+                {
+                    expected.Add(specs[i]);
+                }
+            }
+
+            var existing = state.transitions;
+            if (existing.Length != expected.Count)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < existing.Length; i++)
+            {
+                if (!TransitionMatches(existing[i], expected[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static bool TransitionMatches(AnimatorStateTransition actual, TransitionSpec want)
+        {
+            if (actual.destinationState != want.To ||
+                actual.destinationStateMachine != null ||
+                actual.isExit)
+            {
+                return false;
+            }
+            if (actual.hasExitTime != want.HasExitTime)
+            {
+                return false;
+            }
+            // exitTime only means anything when hasExitTime is set; on the movement
+            // transitions it keeps whatever default Unity picked, so comparing it
+            // there would fail for no reason.
+            if (want.HasExitTime && !Mathf.Approximately(actual.exitTime, want.ExitTime))
+            {
+                return false;
+            }
+            if (!Mathf.Approximately(actual.duration, TransitionDuration))
+            {
+                return false;
+            }
+
+            var conditions = actual.conditions;
+            if (conditions.Length != want.Conditions.Length)
+            {
+                return false;
+            }
+            for (var i = 0; i < conditions.Length; i++)
+            {
+                if (conditions[i].mode != want.Conditions[i].Mode ||
+                    conditions[i].parameter != want.Conditions[i].Parameter ||
+                    !Mathf.Approximately(conditions[i].threshold, want.Conditions[i].Threshold))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static void Apply(TransitionSpec spec)
+        {
+            var transition = spec.From.AddTransition(spec.To);
+            transition.hasExitTime = spec.HasExitTime;
+            if (spec.HasExitTime)
+            {
+                transition.exitTime = spec.ExitTime;
+            }
+            transition.duration = TransitionDuration;
+            for (var i = 0; i < spec.Conditions.Length; i++)
+            {
+                var condition = spec.Conditions[i];
+                transition.AddCondition(condition.Mode, condition.Threshold, condition.Parameter);
+            }
         }
 
         private static bool HasParameter(AnimatorController controller, string name)
@@ -93,15 +340,19 @@ namespace LostRelic.EditorTools
             return false;
         }
 
-        private static void EnsureParameter(
+        // Returns true only when it actually added the parameter, so the caller can
+        // tell whether the asset needs saving.
+        private static bool EnsureParameter(
             AnimatorController controller,
             string name,
             AnimatorControllerParameterType type)
         {
-            if (!HasParameter(controller, name))
+            if (HasParameter(controller, name))
             {
-                controller.AddParameter(name, type);
+                return false;
             }
+            controller.AddParameter(name, type);
+            return true;
         }
 
         private static AnimatorControllerParameter FindParameter(
@@ -140,43 +391,6 @@ namespace LostRelic.EditorTools
             {
                 state.RemoveTransition(transitions[i]);
             }
-        }
-
-        private static AnimatorStateTransition AddTransition(
-            AnimatorState from,
-            AnimatorState to,
-            AnimatorControllerParameter parameter,
-            AnimatorConditionMode mode,
-            float threshold)
-        {
-            var transition = from.AddTransition(to);
-            transition.hasExitTime = false;
-            transition.duration = 0.15f;
-            transition.AddCondition(mode, threshold, parameter.name);
-            return transition;
-        }
-
-        private static AnimatorStateTransition AddTriggerTransition(
-            AnimatorState from,
-            AnimatorState to,
-            string parameterName)
-        {
-            var transition = from.AddTransition(to);
-            transition.hasExitTime = false;
-            transition.duration = 0.15f;
-            transition.AddCondition(AnimatorConditionMode.If, 0f, parameterName);
-            return transition;
-        }
-
-        private static AnimatorStateTransition AddExitTransition(
-            AnimatorState from,
-            AnimatorState to)
-        {
-            var transition = from.AddTransition(to);
-            transition.hasExitTime = true;
-            transition.exitTime = 0.85f;
-            transition.duration = 0.15f;
-            return transition;
         }
     }
 }
