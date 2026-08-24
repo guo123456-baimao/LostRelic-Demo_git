@@ -8,8 +8,8 @@ namespace LostRelic.EditorTools
     {
         private static readonly string[] PrefabPaths =
         {
-            "Assets/Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
-            "Assets/Assets/Enemies/Prefabs/PolyartDefault/SlimePolyart.prefab"
+            "Assets/Project-Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
+            "Assets/Project-Assets/Enemies/Prefabs/PolyartDefault/SlimePolyart.prefab"
         };
 
         [MenuItem("LostRelic/Setup Enemy HP Bar")]

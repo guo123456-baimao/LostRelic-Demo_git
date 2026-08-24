@@ -9,9 +9,9 @@ namespace LostRelic.EditorTools
     public static class NpcAnimatorSetup
     {
         private const string NpcControllerPath =
-            "Assets/Assets/Old Guide/Animator/MageIdle.controller";
+            "Assets/Project-Assets/Old Guide/Animator/MageIdle.controller";
         private const string NpcAnimationFbxPath =
-            "Assets/Assets/Old Guide/Old Guide/Animations/fbx/Rig_Medium/Rig_Medium_General.fbx";
+            "Assets/Project-Assets/Old Guide/Old Guide/Animations/fbx/Rig_Medium/Rig_Medium_General.fbx";
 
         static NpcAnimatorSetup()
         {
@@ -21,8 +21,9 @@ namespace LostRelic.EditorTools
         [MenuItem("LostRelic/Setup NPC Animator")]
         public static void EnsureNpcAnimator()
         {
-            EnsureFolder("Assets/Assets", "Old Guide");
-            EnsureFolder("Assets/Assets/Old Guide", "Animator");
+            EnsureFolder("Assets", "Project-Assets");
+            EnsureFolder("Assets/Project-Assets", "Old Guide");
+            EnsureFolder("Assets/Project-Assets/Old Guide", "Animator");
 
             var clips = AssetDatabase.LoadAllAssetsAtPath(NpcAnimationFbxPath)
                 .OfType<AnimationClip>()

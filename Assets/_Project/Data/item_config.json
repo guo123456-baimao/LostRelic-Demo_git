@@ -7,7 +7,7 @@
     "maxStack": 1,
     "desc": "四只守护遗迹的猫头鹰雕像之首，底座刻着一行古符：『四者归位，石门方开』。",
     "icon": "icon_owl",
-    "model": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_1.prefab"
+    "model": "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_1.prefab"
   },
   {
     "id": "item_owl_2",
@@ -17,7 +17,7 @@
     "maxStack": 1,
     "desc": "第二只雕像，双目嵌着幽蓝宝石，凝望的方向似乎指向遗迹更深的通道。",
     "icon": "icon_owl",
-    "model": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_2.prefab"
+    "model": "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_2.prefab"
   },
   {
     "id": "item_owl_3",
@@ -27,7 +27,7 @@
     "maxStack": 1,
     "desc": "第三只雕像，羽翼上金纹未褪。四缺其一，祭坛的石纹仍旧暗着。",
     "icon": "icon_owl",
-    "model": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_3.prefab"
+    "model": "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_3.prefab"
   },
   {
     "id": "item_owl_4",
@@ -37,6 +37,6 @@
     "maxStack": 1,
     "desc": "最后一只雕像。四者归位之时，祭坛将随之苏醒，石门为集齐之人敞开。",
     "icon": "icon_owl",
-    "model": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_4.prefab"
+    "model": "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_4.prefab"
   }
 ]

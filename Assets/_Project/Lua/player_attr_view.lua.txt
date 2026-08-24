@@ -154,7 +154,7 @@ function M.init(res_font, res_panel)
         return
     end
     CS.UnityEngine.Debug.LogWarning("[UI] attr fallback ui")
-    local frame_sprite = ResService.LoadSprite("Assets/Assets/UI/UI_White_Blue.png")
+    local frame_sprite = ResService.LoadSprite("Assets/Project-Assets/UI/UI_White_Blue.png")
     local root = UIManager.Root
 
     bar_bg = UIManager.CreatePanel(

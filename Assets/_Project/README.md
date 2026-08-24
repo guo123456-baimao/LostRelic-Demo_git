@@ -45,7 +45,7 @@
 ## 当前占位与替换点
 
 - 终局使用简单 UI 面板，未提供终局特效。
-- 4 只猫头鹰共用同一张图标 `Assets/Assets/Icons/#2 - Transparent Icons & Drop Shadow.png`。
+- 4 只猫头鹰共用同一张图标 `Assets/Project-Assets/Icons/#2 - Transparent Icons & Drop Shadow.png`。
 - 玩家 `defense` 只用于面板显示，不参与减伤：`player_attr.take_damage` 直接扣掉
   敌人的裸攻击。全程也没有任何回血入口（`M.heal` 没有调用方），100 血是整局资源。
 

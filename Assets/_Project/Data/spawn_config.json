@@ -1,7 +1,7 @@
 {
   "rootName": "__LostRelicDemo",
   "player": {
-    "prefab": "Assets/Assets/Player/Prefab/Palyer_prefab.prefab",
+    "prefab": "Assets/Project-Assets/Player/Prefab/Palyer_prefab.prefab",
     "position": [-13, -4, -48],
     "rotationY": 90,
     "stats": {
@@ -14,7 +14,7 @@
   },
   "npc": {
     "id": "npc_old_guide",
-    "prefab": "Assets/Assets/Old Guide/Old Guide/Characters/fbx/Mage.fbx",
+    "prefab": "Assets/Project-Assets/Old Guide/Old Guide/Characters/fbx/Mage.fbx",
     "position": [-15, -4, -51],
     "rotationY": 30,
     "displayName": "老向导",
@@ -24,28 +24,28 @@
     {
       "id": "item_owl_1",
       "name": "猫头鹰雕像·一",
-      "prefab": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_1.prefab",
+      "prefab": "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_1.prefab",
       "position": [-16, -4, -55],
       "rotationY": 0
     },
     {
       "id": "item_owl_2",
       "name": "猫头鹰雕像·二",
-      "prefab": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_2.prefab",
+      "prefab": "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_2.prefab",
       "position": [-30, -4, -50],
       "rotationY": 0
     },
     {
       "id": "item_owl_3",
       "name": "猫头鹰雕像·三",
-      "prefab": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_3.prefab",
+      "prefab": "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_3.prefab",
       "position": [-49, -4, -50],
       "rotationY": 0
     },
     {
       "id": "item_owl_4",
       "name": "猫头鹰雕像·四",
-      "prefab": "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_4.prefab",
+      "prefab": "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_4.prefab",
       "position": [-44, -4, -72],
       "rotationY": 0
     }
@@ -54,7 +54,7 @@
     {
       "id": "enemy_scout_1",
       "name": "侦察史莱姆",
-      "prefab": "Assets/Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
+      "prefab": "Assets/Project-Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
       "position": [-33, -4, -54],
       "rotationY": 135,
       "alertRadius": 8,
@@ -75,7 +75,7 @@
     {
       "id": "enemy_scout_2",
       "name": "侦察史莱姆",
-      "prefab": "Assets/Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
+      "prefab": "Assets/Project-Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
       "position": [-46, -4, -54],
       "rotationY": 135,
       "alertRadius": 8,
@@ -96,7 +96,7 @@
     {
       "id": "enemy_guard_1",
       "name": "守卫龟",
-      "prefab": "Assets/Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
+      "prefab": "Assets/Project-Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
       "position": [-50, -4, -56],
       "rotationY": 135,
       "alertRadius": 6.5,
@@ -117,7 +117,7 @@
     {
       "id": "enemy_guard_2",
       "name": "守卫龟",
-      "prefab": "Assets/Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
+      "prefab": "Assets/Project-Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
       "position": [-44, -4, -64],
       "rotationY": 135,
       "alertRadius": 6.5,
@@ -138,7 +138,7 @@
     {
       "id": "enemy_elite_1",
       "name": "精英守卫",
-      "prefab": "Assets/Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
+      "prefab": "Assets/Project-Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
       "position": [-44, -4, -68],
       "rotationY": 135,
       "alertRadius": 10,

@@ -8,7 +8,7 @@ namespace LostRelic.EditorTools
     public static class EnemyAnimatorSetup
     {
         private const string EnemyControllerPath =
-            "Assets/Assets/Enemies/Animators/Slime.controller";
+            "Assets/Project-Assets/Enemies/Animators/Slime.controller";
 
         static EnemyAnimatorSetup()
         {

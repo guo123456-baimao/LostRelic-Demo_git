@@ -14,9 +14,9 @@ namespace LostRelic.EditorTools
     {
         private const string ScenePath = "Assets/Scenes/SampleScene.unity";
         private const string SpawnConfigPath = "Assets/_Project/Data/spawn_config.json";
-        private const string FontPath = "Assets/Assets/Text.ttf";
-        private const string PanelSpritePath = "Assets/Assets/UI/UI_White_Transperent.png";
-        private const string DialogSpritePath = "Assets/Assets/UI/UI_White_Blue.png";
+        private const string FontPath = "Assets/Project-Assets/Text.ttf";
+        private const string PanelSpritePath = "Assets/Project-Assets/UI/UI_White_Transperent.png";
+        private const string DialogSpritePath = "Assets/Project-Assets/UI/UI_White_Blue.png";
         private const string DialogSpriteName = "artdecoUI_PIPO_wb_1";
 
         [Serializable]
@@ -243,10 +243,10 @@ namespace LostRelic.EditorTools
         private static void EnsureEnemyPrefabs()
         {
             EnsureEnemyPrefab(
-                "Assets/Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
+                "Assets/Project-Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
                 "enemy_slime_1");
             EnsureEnemyPrefab(
-                "Assets/Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
+                "Assets/Project-Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
                 "enemy_turtle_1");
         }
 

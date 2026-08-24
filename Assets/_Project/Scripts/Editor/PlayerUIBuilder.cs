@@ -16,9 +16,9 @@ namespace LostRelic.EditorTools
             root.localScale = Vector3.one;
             var font = LoadFont();
             var frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
-                "Assets/Assets/UI/UI_White_Blue.png");
+                "Assets/Project-Assets/UI/UI_White_Blue.png");
             var panelSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
-                "Assets/Assets/UI/UI_White_Transperent.png");
+                "Assets/Project-Assets/UI/UI_White_Transperent.png");
 
             if (GameObject.Find("PlayerHpBar") == null)
             {
@@ -49,7 +49,7 @@ namespace LostRelic.EditorTools
 
         private static Font LoadFont()
         {
-            var font = AssetDatabase.LoadAssetAtPath<Font>("Assets/Assets/Text.ttf");
+            var font = AssetDatabase.LoadAssetAtPath<Font>("Assets/Project-Assets/Text.ttf");
             if (font == null)
             {
                 font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");

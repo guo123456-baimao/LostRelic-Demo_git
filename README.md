@@ -31,8 +31,8 @@ GUID 引用指向不存在的文件。**组件配置、动画状态机、场景�
 **想跑起来**：各素材包的原始说明与授权文件已随仓库保留，可据此回到来源重新获取，
 放回同名目录即可，例如：
 
-- `Assets/Assets/Ground/Modular Dungeon Tiles/README.txt`
-- `Assets/Assets/Old Guide/Old Guide/License.txt`
+- `Assets/Project-Assets/Ground/Modular Dungeon Tiles/README.txt`
+- `Assets/Project-Assets/Old Guide/Old Guide/License.txt`
 
 ---
 
@@ -203,7 +203,7 @@ Assets/_Project/          本工程自有代码与配置
 Assets/Scenes/            SampleScene（玩家、老向导、4 雕像、守卫均在场景中编排）
 Assets/Settings/          URP 管线与质量资产
 Assets/AddressableAssetsData/
-Assets/Assets/            第三方素材目录（仅保留 prefab / Animator / 材质等文本资产）
+Assets/Project-Assets/    第三方素材目录（仅保留 prefab / Animator / 材质等文本资产）
 Docs/策划文档.md
 ```
 
@@ -216,5 +216,5 @@ Lua 文件用 `.lua.txt` 后缀，是为了让 Unity 直接按 `TextAsset` 导�
 
 ## 说明
 
-代码与配置为本人所写。`Assets/Assets/` 下的第三方素材版权归各自作者，
+代码与配置为本人所写。`Assets/Project-Assets/` 下的第三方素材版权归各自作者，
 其原始授权文件已随目录保留。

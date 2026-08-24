@@ -9,7 +9,7 @@ namespace LostRelic.EditorTools
     public static class PlayerAnimatorSetup
     {
         private const string PlayerControllerPath =
-            "Assets/Assets/Player/Animator/DogControl.controller";
+            "Assets/Project-Assets/Player/Animator/DogControl.controller";
         private const float TransitionDuration = 0.15f;
         private const float AttackExitTime = 0.85f;
         private const float WalkThreshold = 0.1f;

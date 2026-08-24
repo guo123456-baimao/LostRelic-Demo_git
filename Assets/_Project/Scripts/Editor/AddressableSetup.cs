@@ -14,20 +14,24 @@ namespace LostRelic.EditorTools
 
         private static readonly string[] UserAssetPaths =
         {
-            "Assets/Assets/Player/Prefab/Palyer_prefab.prefab",
-            "Assets/Assets/Old Guide/Old Guide/Characters/fbx/Mage.fbx",
-            "Assets/Assets/Old Guide/Animator/MageIdle.controller",
-            "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_1.prefab",
-            "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_2.prefab",
-            "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_3.prefab",
-            "Assets/Assets/Quest Item/Quest Item/Prefabs/Quest Item_4.prefab",
-            "Assets/Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
-            "Assets/Assets/Icons/#2 - Transparent Icons & Drop Shadow.png",
-            "Assets/Assets/Text.ttf",
-            "Assets/Assets/Audio/BGM/Background Music.wav",
-            "Assets/Assets/Audio/BGM/Enemy Spawned.wav",
-            "Assets/Assets/Audio/Sound Effects/sfx_spell 1.mp3",
-            "Assets/Assets/Audio/BGM/Sounds/click-b.ogg"
+            "Assets/Project-Assets/Player/Prefab/Palyer_prefab.prefab",
+            "Assets/Project-Assets/Old Guide/Old Guide/Characters/fbx/Mage.fbx",
+            "Assets/Project-Assets/Old Guide/Animator/MageIdle.controller",
+            "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_1.prefab",
+            "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_2.prefab",
+            "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_3.prefab",
+            "Assets/Project-Assets/Quest Item/Quest Item/Prefabs/Quest Item_4.prefab",
+            "Assets/Project-Assets/Enemies/Prefabs/PBRDefault/SlimePBR.prefab",
+            "Assets/Project-Assets/Enemies/Prefabs/PBRDefault/TurtleShellPBR.prefab",
+            "Assets/Project-Assets/Icons/#2 - Transparent Icons & Drop Shadow.png",
+            "Assets/Project-Assets/Text.ttf",
+            "Assets/Project-Assets/Audio/BGM/Background Music.wav",
+            "Assets/Project-Assets/Audio/BGM/Enemy Spawned.wav",
+            "Assets/Project-Assets/Audio/Sound Effects/sfx_spell 1.mp3",
+            "Assets/Project-Assets/Audio/Sound Effects/sfx_attack2.mp3",
+            "Assets/Project-Assets/Audio/Sound Effects/sfx_attack3.mp3",
+            "Assets/Project-Assets/Audio/Sound Effects/Dagger_stab_Quick__#4-1766764076280.mp3",
+            "Assets/Project-Assets/Audio/BGM/Sounds/click-b.ogg"
         };
 
         [InitializeOnLoadMethod]
@@ -67,11 +71,11 @@ namespace LostRelic.EditorTools
             MarkFolder(settings, luaGroup, "Assets/_Project/Lua", "*.lua.txt", "lua");
             MarkFolder(settings, dataGroup, "Assets/_Project/Data", "*.json", "data");
 
-            PrepareSpriteFolder("Assets/Assets/UI");
-            PrepareSpriteFolder("Assets/Assets/Icons");
+            PrepareSpriteFolder("Assets/Project-Assets/UI");
+            PrepareSpriteFolder("Assets/Project-Assets/Icons");
 
-            MarkFolder(settings, userGroup, "Assets/Assets/UI", "*.png", "ui");
-            MarkFolder(settings, userGroup, "Assets/Assets/Icons", "*.png", "ui");
+            MarkFolder(settings, userGroup, "Assets/Project-Assets/UI", "*.png", "ui");
+            MarkFolder(settings, userGroup, "Assets/Project-Assets/Icons", "*.png", "ui");
 
             foreach (var path in UserAssetPaths)
             {

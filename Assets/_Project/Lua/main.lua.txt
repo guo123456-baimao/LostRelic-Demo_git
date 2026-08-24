@@ -88,7 +88,7 @@ function M.start()
 
     if npc_go then
         ComponentFactory.AddCapsuleCollider(npc_go, 1.8, 0.4, Vector3(0, 0.9, 0))
-        local npc_controller = ResService.LoadAnimatorController("Assets/Assets/Old Guide/Animator/MageIdle.controller")
+        local npc_controller = ResService.LoadAnimatorController("Assets/Project-Assets/Old Guide/Animator/MageIdle.controller")
         if npc_controller then
             ComponentFactory.SetAnimatorController(npc_go, npc_controller)
         end
@@ -115,9 +115,9 @@ function M.start()
         end
     end
 
-    local font = ResService.LoadFont("Assets/Assets/Text.ttf")
-    local icon_sprite = ResService.LoadSprite("Assets/Assets/Icons/#2 - Transparent Icons & Drop Shadow.png")
-    local panel_sprite = ResService.LoadSprite("Assets/Assets/UI/UI_White_Transperent.png")
+    local font = ResService.LoadFont("Assets/Project-Assets/Text.ttf")
+    local icon_sprite = ResService.LoadSprite("Assets/Project-Assets/Icons/#2 - Transparent Icons & Drop Shadow.png")
+    local panel_sprite = ResService.LoadSprite("Assets/Project-Assets/UI/UI_White_Transperent.png")
 
     uiCtrl.init(font, panel_sprite)
     inventoryView.init(font, icon_sprite, panel_sprite, items_by_id)

@@ -40,7 +40,7 @@ function M.init(res_font, res_panel)
     dialog_panel.anchoredPosition = Vector2(0, -380)
     local dialog_bg = UIManager.CreateImage(
         "DialogBg", dialog_panel,
-        ResService.LoadSprite("Assets/Assets/UI/UI_White_Blue.png[artdecoUI_PIPO_wb_1]"),
+        ResService.LoadSprite("Assets/Project-Assets/UI/UI_White_Blue.png[artdecoUI_PIPO_wb_1]"),
         Color(1, 1, 1, 1), Vector2(0, 0), Vector2(1480, 232))
     dialog_bg.preserveAspect = false
     dialog_bg.type = CS.UnityEngine.UI.Image.Type.Sliced
