@@ -20,6 +20,12 @@ namespace LostRelic
         public float defense = 2f;
         public float attackRange = 1.5f;
         public float attackInterval = 1.2f;
+        // How far a hit shoves this enemy back, in world units. 0 = immune, and
+        // that has to keep working through the config merge, which is why the
+        // Lua side tests for nil rather than falsiness. The window the shove is
+        // spread over is not tunable -- it lives in enemy_ctrl.lua so the
+        // designer only has one dial per enemy.
+        public float knockback = 0.6f;
         public Transform enemyRoot;
 
         // Tuning precedence, per field: spawn_config.json wins wherever it
@@ -49,7 +55,8 @@ namespace LostRelic
             float attack = 5f,
             float defense = 2f,
             float attackRange = 1.5f,
-            float attackInterval = 1.2f)
+            float attackInterval = 1.2f,
+            float knockback = 0.6f)
         {
             var component = target.GetComponent<EnemyAlertZone>();
             if (component == null)
@@ -73,6 +80,7 @@ namespace LostRelic
                 component.defense = defense;
                 component.attackRange = attackRange;
                 component.attackInterval = attackInterval;
+                component.knockback = knockback;
             }
 
             component.enemyId = enemyId;

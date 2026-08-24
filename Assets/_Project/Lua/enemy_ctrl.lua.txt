@@ -40,6 +40,13 @@ local DEATH_HOLD = 2.0
 local DEATH_SINK_TIME = 1.0
 local DEATH_SINK_DEPTH = 2.5
 
+-- How long a knockback shove is spread over. Deliberately not exposed to
+-- spawn_config.json: distance is the only dial a designer needs, and a per-enemy
+-- window would just be a second way to say "harder to hit". Short enough that
+-- the enemy never coasts, long enough to read as a stagger rather than a
+-- teleport.
+local KNOCKBACK_TIME = 0.18
+
 local function random_idle_time(enemy)
     local min_t = enemy ~= nil and enemy.idle_min or IDLE_MIN
     local max_t = enemy ~= nil and enemy.idle_max or IDLE_MAX
@@ -114,6 +121,49 @@ local function nav_arrived(enemy)
         enemy.agent.remainingDistance <= enemy.agent.stoppingDistance + 0.2
 end
 
+-- Knockback is an overlay on the state machine, not a state of its own. The
+-- alert block in M.update re-asserts state = "chase" every frame the player is
+-- inside the alert radius, and the smallest alert radius (6.5) is far larger
+-- than PLAYER_ATTACK_RANGE (2.5) -- the player can never land a hit from
+-- outside it, so a "knockback" state would be overwritten on the very next
+-- frame. A timer field cannot be overwritten, so that is what this is.
+local function start_knockback(enemy)
+    local distance = enemy.knockback or 0
+    if distance <= 0 or player == nil then
+        return
+    end
+
+    local direction = enemy.transform.position - player.transform.position
+    direction.y = 0
+    if direction.magnitude > 0.01 then
+        direction = direction.normalized
+    else
+        -- Standing exactly inside the player. The enemy faces whatever it is
+        -- chasing, so its own back is the best guess at "away".
+        direction = enemy.transform.forward * -1
+    end
+
+    enemy.kb_left = KNOCKBACK_TIME
+    enemy.kb_dir = direction
+    enemy.kb_dist = distance
+
+    -- Clearing nav_dest is the point of this call, not stopping the agent: the
+    -- destination de-dupe in start_navigation only re-issues when the target has
+    -- moved more than 0.15 m, so without this the enemy would resume chasing a
+    -- destination computed from where it stood before being shoved.
+    stop_agent(enemy)
+
+    -- The swing in progress is cancelled outright, so the blow it was winding up
+    -- to never lands. attack_cooldown is deliberately left running -- being
+    -- interrupted should not also hand the enemy a free immediate re-swing.
+    enemy.hit_left = nil
+    enemy.swing_left = nil
+
+    if enemy.hit_anim ~= nil then
+        play_anim(enemy, enemy.hit_anim)
+    end
+end
+
 function M.on_player_attack(damage)
     if player == nil then
         return
@@ -150,22 +200,28 @@ function M.apply_damage(enemy, raw_damage)
     enemy.hp = enemy.hp - amount
     EventBus.publish("OnEnemyDamaged", enemy.id, amount)
 
-        if enemy.hp <= 0 then
-            enemy.hp = 0
-            enemy.dead = true
-            enemy.state = "dead"
-            enemy.death_elapsed = 0
-            EventBus.publish("OnEnemyHpHide", enemy.id)
-            stop_agent(enemy)
-            if enemy.controller then
-                enemy.controller.enabled = false
-            end
-            if enemy.agent then
-                enemy.agent.enabled = false
-            end
-            play_anim(enemy, "Die")
-            EventBus.publish("OnEnemyDied", enemy.id)
+    if enemy.hp <= 0 then
+        enemy.hp = 0
+        enemy.dead = true
+        enemy.state = "dead"
+        enemy.death_elapsed = 0
+        enemy.kb_left = nil
+        EventBus.publish("OnEnemyHpHide", enemy.id)
+        stop_agent(enemy)
+        if enemy.controller then
+            enemy.controller.enabled = false
         end
+        if enemy.agent then
+            enemy.agent.enabled = false
+        end
+        play_anim(enemy, "Die")
+        EventBus.publish("OnEnemyDied", enemy.id)
+    else
+        -- Only a survivor gets shoved. The killing blow goes straight to the
+        -- death branch above, which disables the agent and hands the body to
+        -- the sink-out, so a knockback there would fight the corpse animation.
+        start_knockback(enemy)
+    end
 end
 
 local function pick_waypoint(enemy)
@@ -224,6 +280,7 @@ local ZONE_FIELDS = {
     { "defense",        "defense" },
     { "attackRange",    "attackRange" },
     { "attackInterval", "attackInterval" },
+    { "knockback",      "knockback" },
 }
 
 -- Precedence, per key: a key present in spawn_config.json wins; a key left out
@@ -325,7 +382,8 @@ function M.init(root_go, player_go, enemy_configs)
                 config.attack or 5,
                 config.defense or 2,
                 config.attackRange or 1.5,
-                config.attackInterval or 1.2)
+                config.attackInterval or 1.2,
+                config.knockback or 0.6)
 
             -- Attach() above only seeds a component that did not exist yet, so
             -- for the shipped enemies (both prefabs bake one) it does nothing
@@ -392,6 +450,7 @@ function M.init(root_go, player_go, enemy_configs)
                 attack_range = zone.attackRange,
                 attack_interval = zone.attackInterval,
                 attack_cooldown = 0,
+                knockback = zone.knockback,
                 dead = false,
                 zone = zone
             }
@@ -408,6 +467,15 @@ function M.init(root_go, player_go, enemy_configs)
             enemy.stance_anim = "IdleNormal"
             if ComponentFactory.GetClipLength(enemy.animator, "IdleBattle") > 0 then
                 enemy.stance_anim = "IdleBattle"
+            end
+            -- Same "only if the clip exists" rule for the hit reaction. Both
+            -- shipped controllers have a GetHit state, but a controller without
+            -- one must still take knockback -- the shove is the mechanic, the
+            -- flinch is decoration, so a missing clip leaves hit_anim nil and
+            -- whatever was playing keeps playing.
+            enemy.hit_anim = nil
+            if ComponentFactory.GetClipLength(enemy.animator, "GetHit") > 0 then
+                enemy.hit_anim = "GetHit"
             end
             enemies[#enemies + 1] = enemy
 
@@ -444,6 +512,7 @@ function M.init(root_go, player_go, enemy_configs)
                 " atkDist=" .. enemy.attack_distance ..
                 " alert=" .. enemy.alert_radius ..
                 " chase=" .. enemy.chase_radius ..
+                " kb=" .. enemy.knockback ..
                 source_label)
             stop_agent(enemy)
             play_anim(enemy, "IdleNormal")
@@ -517,7 +586,38 @@ function M.update(dt)
                 enter_patrol(enemy)
             end
 
-            if enemy.state == "chase" then
+            -- Knockback sits ahead of the state machine and swallows the frame:
+            -- while a shove is in flight the enemy neither steers nor swings,
+            -- and whatever state it was in is still there waiting when the
+            -- timer runs out, so nothing has to be restored.
+            if enemy.kb_left ~= nil then
+                local step_t = math.min(dt, enemy.kb_left)
+                local step = enemy.kb_dir *
+                    (enemy.kb_dist * step_t / KNOCKBACK_TIME)
+                -- Move() is the only correct way to shove a live agent: it
+                -- displaces the body and keeps it clamped to the navmesh, so a
+                -- shove structurally cannot push the enemy into a wall or off
+                -- the mesh. transform.position would be dragged back next frame
+                -- by updatePosition, Warp is a teleport with no travel, and
+                -- agent.velocity gets overwritten by the agent's own steering.
+                if use_navmesh then
+                    enemy.agent:Move(step)
+                elseif enemy.controller ~= nil then
+                    enemy.controller:Move(step)
+                end
+                -- Re-asserted every frame, not just at the start: the alert
+                -- block above plays RunFWD on the transition into chase, and
+                -- that transition can land in the middle of a shove.
+                if enemy.hit_anim ~= nil then
+                    play_anim(enemy, enemy.hit_anim)
+                end
+                enemy.kb_left = enemy.kb_left - dt
+                if enemy.kb_left <= 0 then
+                    enemy.kb_left = nil
+                    enemy.kb_dir = nil
+                    enemy.kb_dist = nil
+                end
+            elseif enemy.state == "chase" then
                 if use_navmesh then
                     start_navigation(enemy, player_position, enemy.chase_speed, enemy.attack_distance)
                     if nav_arrived(enemy) then

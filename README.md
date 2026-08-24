@@ -129,6 +129,12 @@ prefab 出厂就带着启用状态的 `NavMeshAgent`，实例化那一刻它就�
 会在下一帧把身体拉回那个原点岛。解法是用 `agent:Warp(spawn_center)`
 （`enemy_ctrl.lua:366`）重置 agent 的模拟位置，而不是写 `transform.position`。
 
+后来加「受击击退」时复用了同一条结论：位移走 `agent:Move(offset)`，不写
+`transform.position`（会被拽回）、也不用 `Warp`（瞬移没有过程）、更不能写
+`agent.velocity`（会被 agent 自己的操舵覆盖）。`Move` 顺带把身体约束在导航网格上，
+所以击退**不可能**把敌人推进墙里或推出网格 —— 从结构上排除了上面第 1 条的死锁。
+实测请求 1.0 m / 0.6 m，净位移 1.000 / 0.600，路程等于净位移（零偏折、零裁剪）。
+
 ### 3. 挥砍次数比伤害次数多
 
 `TurtleShell` 的 `Attack01` 片段被标记为 looping，裸调 `Play()` 会每 0.83 s 重挥一次，

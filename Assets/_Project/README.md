@@ -54,7 +54,7 @@
 敌人和玩家的数值都可以直接改 `Data/spawn_config.json`，**改完进 Play 即生效**，
 不用重建 Addressables（编辑器下 `DataService` 直读源文件）。
 
-- 敌人：`enemies[]` 里每个条目的 14 项
+- 敌人：`enemies[]` 里每个条目的 15 项
 - 玩家：`player.stats` 的 5 项（`maxHp` / `hp` / `attack` / `defense` / `speed`）
 
 优先级是**逐字段**的，两条通道规则一致：
@@ -68,12 +68,16 @@
 `Lua/enemy_ctrl.lua.txt` 的 `apply_config_overrides` 和 `Lua/player_attr.lua.txt`
 的 `M.init`。
 
-三条约束：
+四条约束：
 
 - 敌人的 `attackRange` 必须 ≥ `attackDistance`，否则敌人会停在自己的攻击距离之外，
   导航到位却永远打不到人。
 - 只改 `maxHp` 不写 `hp` 时按满血出生；要开局残血就把 `hp` 一起写上（敌人玩家同理）。
 - 玩家疾跑是走速 ×2.0，写死在 `player_ctrl.lua.txt`，不在 JSON 里。
+- `knockback` 是被玩家命中时后退的距离（米），`0` = 免疫（这一条是 15 项里最新加的）。
+  它同时会**打断敌人正在挥的那一刀，那一刀不再结算伤害**，所以它不只是手感、更是难度旋钮：
+  实测守卫龟（`attackInterval` 1.6）在玩家贴身 0.45 s 连点下 9 秒内挥 6 刀、一刀都打不出伤害。
+  推进时长写死在 `enemy_ctrl.lua.txt` 的 `KNOCKBACK_TIME`，设计面只暴露「距离」一个旋钮。
 
 进 Play 后 Console 会打出：
 

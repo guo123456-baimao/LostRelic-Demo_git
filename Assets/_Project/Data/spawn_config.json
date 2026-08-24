@@ -70,7 +70,8 @@
       "attack": 4,
       "defense": 0,
       "attackRange": 1.5,
-      "attackInterval": 1.1
+      "attackInterval": 1.1,
+      "knockback": 1.0
     },
     {
       "id": "enemy_scout_2",
@@ -91,7 +92,8 @@
       "attack": 4,
       "defense": 0,
       "attackRange": 1.5,
-      "attackInterval": 1.1
+      "attackInterval": 1.1,
+      "knockback": 1.0
     },
     {
       "id": "enemy_guard_1",
@@ -112,7 +114,8 @@
       "attack": 8,
       "defense": 3,
       "attackRange": 1.8,
-      "attackInterval": 1.6
+      "attackInterval": 1.6,
+      "knockback": 0.6
     },
     {
       "id": "enemy_guard_2",
@@ -133,7 +136,8 @@
       "attack": 8,
       "defense": 3,
       "attackRange": 1.8,
-      "attackInterval": 1.6
+      "attackInterval": 1.6,
+      "knockback": 0.6
     },
     {
       "id": "enemy_elite_1",
@@ -154,7 +158,8 @@
       "attack": 11,
       "defense": 4,
       "attackRange": 1.9,
-      "attackInterval": 1.3
+      "attackInterval": 1.3,
+      "knockback": 0.35
     }
   ]
 }
