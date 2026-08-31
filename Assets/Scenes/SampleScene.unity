@@ -29375,6 +29375,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 600868223, guid: 928a1377c1cd4515b208fef3a396b8ea, type: 3}
+      propertyPath: knockback
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 600868223, guid: 928a1377c1cd4515b208fef3a396b8ea, type: 3}
       propertyPath: chaseSpeed
       value: 5
       objectReference: {fileID: 0}
